@@ -3,7 +3,6 @@ from influxdb import InfluxDBClient
 import random
 import time
 
-
 db = InfluxDBClient('localhost', 8086, 'root', 'root', 'client2_db')
 db.create_database('client2_db')
 
@@ -13,24 +12,18 @@ def generate_data():
     client_name = "client2"
     number_of_points = 5000
     data = []
-    # curr_time = int(time.time() * 1000)
-    # print("curr_time: ", curr_time)
     for i in range(number_of_points):
         welding_value = format(round(random.uniform(0, 30), 4))
-        # curr_time += random.randint(1, 100)
-        uniqueID = 'uniqueID' + str(i+1)
-        # curr_time = 10000*dt_time.year + 100*dt_time.month + dt_time.day
-        # new_timee = dt.datetime.strftime(curr_time, '%m%d%H')
-
-        # current_time = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
-        current_time = int(time.time() * 1000000000)
+        curr_time = int(time.time() * 1000)  # previous int(time.time() * 1000000000)
+        uniqueID = 'uniqueID' + str(i + 1)
         data.append("{measurement},client={client},uniqueID={uniqueID} welding_value={welding_value} {timestamp}"
                     .format(measurement=measurement_name,
                             client=client_name,
                             uniqueID=uniqueID,
                             welding_value=welding_value,
-                            timestamp=current_time))
-    db.write_points(data, database='client2_db', time_precision='n', batch_size=5000, protocol="line")
+                            timestamp=curr_time))
+    db.write_points(data, database='client2_db', time_precision='ms', batch_size=5000,
+                    protocol="line")  # previous time_precision='n'
 
 
 def checkListDuplicates(listOfElems):
@@ -65,9 +58,9 @@ def get_db_data():
 
 def on_connect(client, userdata, flags, rc):
     if rc != 0:
-        print("Client1 - error connecting, rc: ", rc)
+        print("Client2 - error connecting, rc: ", rc)
     else:
-        print("Client1 - successfully connected.")
+        print("Client2 - successfully connected.")
         client.subscribe("topic/master")
         client.subscribe("topic/client1")
 
@@ -84,14 +77,13 @@ def on_message(client, userdata, message):
         get_db_data()
 
 
-# broker_address = "broker.hivemq.com" #use external broker
-broker_address = "localhost"  # local broker
+broker_address = "broker.hivemq.com" # use external broker
+# broker_address = "localhost"  # local broker
 
 client = mqtt.Client()  # create new
 client.on_connect = on_connect
 client.on_message = on_message
 client.connect(broker_address, port=1883)  # connect to broker
-
 
 generate_data()
 
@@ -106,6 +98,6 @@ print('List of DBs: ', dbs)
 #################################################
 
 time.sleep(4)  # wait
-#db.drop_database('client2_db')
+db.drop_database('client2_db')
 client.loop_stop()  # stop the loop
 client.disconnect()
