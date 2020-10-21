@@ -31,14 +31,14 @@ def on_message(client, userdata, message):
 def get_db_data():
     data = db.query("SELECT * FROM weldingEvents;")
     print("data: ", data)
-    points = data.get_points(tags={'measurement': 'weldingEvents'})
+    # points = data.get_points(tags={'measurement': 'weldingEvents'})
     # print("Master DB: \n", data.raw)
     # for point in points:
     # print("Time: {}, Welding value: {}".format(point['time'], point['welding_value']))
 
     new_data = db.query("SELECT count(welding_value) FROM weldingEvents;")
     all_events = list(new_data.get_points(measurement='weldingEvents'))
-    # print('Total Welding value count: ', all_events[0]['count'])
+    print('Total Welding value count: ', all_events[0]['count'])
 
 
 broker_address = "broker.hivemq.com"  # use external broker
@@ -51,13 +51,13 @@ master.connect(broker_address, port=1883)  # connect to broker
 master.loop_start()
 
 print("Waiting 4 seconds...\n")
-time.sleep(4)
+time.sleep(10)
 
 master.publish("topic/master", "GET_INFORMATION")
 
 #################################################
 
-time.sleep(4)  # wait
+time.sleep(15)  # wait
 get_db_data()
 print('List of DBs: ', db.get_list_database())
 
