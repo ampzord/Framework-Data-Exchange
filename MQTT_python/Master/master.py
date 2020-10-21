@@ -2,7 +2,6 @@ import paho.mqtt.client as mqtt
 import time
 from influxdb import InfluxDBClient
 
-
 db = InfluxDBClient('localhost', 8086, 'root', 'root', 'master_db')
 db.create_database('master_db')
 
@@ -35,13 +34,14 @@ def get_db_data():
     points = data.get_points(tags={'measurement': 'weldingEvents'})
     # print("Master DB: \n", data.raw)
     # for point in points:
-        # print("Time: {}, Welding value: {}".format(point['time'], point['welding_value']))
+    # print("Time: {}, Welding value: {}".format(point['time'], point['welding_value']))
 
     new_data = db.query("SELECT count(welding_value) FROM weldingEvents;")
     all_events = list(new_data.get_points(measurement='weldingEvents'))
     # print('Total Welding value count: ', all_events[0]['count'])
 
-broker_address = "broker.hivemq.com" #use external broker
+
+broker_address = "broker.hivemq.com"  # use external broker
 # broker_address = "localhost"  # local broker
 
 master = mqtt.Client()  # create new instance
@@ -54,7 +54,6 @@ print("Waiting 4 seconds...\n")
 time.sleep(4)
 
 master.publish("topic/master", "GET_INFORMATION")
-
 
 #################################################
 
