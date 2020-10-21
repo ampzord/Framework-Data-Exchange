@@ -3,7 +3,8 @@ from influxdb import InfluxDBClient
 import random
 import time
 
-db = InfluxDBClient('localhost', 8086, 'root', 'root', 'client2_db')
+# db = InfluxDBClient('localhost', 8086, 'root', 'root', 'client2_db')
+db = InfluxDBClient('192.168.1.10', 8086, 'root', 'root', 'client2_db')
 db.create_database('client2_db')
 
 
