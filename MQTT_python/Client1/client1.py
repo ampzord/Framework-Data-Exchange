@@ -11,19 +11,25 @@ db.create_database('client1_db')
 def generate_data():
     measurement_name = "weldingEvents"
     client_name = "client1"
-    number_of_points = 5000
+    number_of_points = 250000
     data = []
     for i in range(number_of_points):
         welding_value = format(round(random.uniform(0, 30), 4))
-        curr_time = int(time.time() * 1000)  # previous int(time.time() * 1000000000)
+        curr_time = int(time.time() * 1000)
+        # curr_time = int(time.time() * 1000000000)
         uniqueID = 'uniqueID' + str(i + 1)
-        data.append("{measurement},client={client},uniqueID={uniqueID} welding_value={welding_value} {timestamp}"
+        # data.append("{measurement},client={client},uniqueID={uniqueID} welding_value={welding_value} {timestamp}"
+        #            .format(measurement=measurement_name,
+        #                    client=client_name,
+        #                    uniqueID=uniqueID,
+        #                    welding_value=welding_value,
+        #                    timestamp=curr_time))
+        data.append("{measurement},client={client} welding_value={welding_value} {timestamp}"
                     .format(measurement=measurement_name,
                             client=client_name,
-                            uniqueID=uniqueID,
                             welding_value=welding_value,
                             timestamp=curr_time))
-    db.write_points(data, database='client1_db', time_precision='ms', batch_size=5000,
+    db.write_points(data, database='client1_db', time_precision='n', batch_size=10000,
                     protocol="line")  # previous time_precision='n'
 
 
@@ -52,8 +58,8 @@ def get_db_data():
     else:
         print('No duplicates found in list.\n')
 
-    sendData = db.query("SELECT * INTO master_db..weldingEvents FROM client1_db..weldingEvents GROUP BY *;")
-    print("Query Successful: ", sendData)
+    send_data = db.query("SELECT * INTO master_db..weldingEvents FROM client1_db..weldingEvents GROUP BY *;")
+    print("Query Successful: ", send_data)
     client.publish("topic/client1", "ALL_INFORMATION_SENT")
 
 
@@ -91,14 +97,14 @@ generate_data()
 client.loop_start()
 
 print("Waiting 4 seconds...\n")
-time.sleep(4)
+time.sleep(10)
 
 dbs = db.get_list_database()
 print('List of DBs: ', dbs)
 
 #################################################
 
-time.sleep(4)  # wait
+time.sleep(10)  # wait
 db.drop_database('client1_db')
 client.loop_stop()  # stop the loop
 client.disconnect()
