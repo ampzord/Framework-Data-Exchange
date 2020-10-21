@@ -3,25 +3,6 @@ from influxdb import InfluxDBClient
 import random
 import time
 
-#################################################
-
-#  Client should be generating data (DB) and when requested send it to Master.
-
-#################################################
-
-# Problem 1 - How to generate the data ?
-# Option 1 - create .csv and write into it, when Master requests information read .csv and send all read information (with high amounts of data this solution will crash)
-# Option 2 - Research generator option (does not seem viable)
-# Option 3 - Keep generating data in a loop and save the result data in DB. (save every data generated?) (save every second) (save every x amount of data produced)
-# - When the data is requested send it to Master
-
-# Problem 2 - How to save the data in influxDB ?
-# Option 1 - Panda dataframe ?
-# Option 2 - json
-
-# Problem 3 - How to send ALL the data in DB to Master ?
-# Option 1 - Send a Panda DataFrame publish ?
-
 db = InfluxDBClient('localhost', 8086, 'root', 'root', 'client1_db')
 db.create_database('client1_db')
 
@@ -33,15 +14,16 @@ def generate_data():
     data = []
     for i in range(number_of_points):
         welding_value = format(round(random.uniform(0, 30), 4))
-        curr_time = int(time.time() * 1000)
-        uniqueID = 'uniqueID' + str(i+1)
+        curr_time = int(time.time() * 1000)  # previous int(time.time() * 1000000000)
+        uniqueID = 'uniqueID' + str(i + 1)
         data.append("{measurement},client={client},uniqueID={uniqueID} welding_value={welding_value} {timestamp}"
                     .format(measurement=measurement_name,
                             client=client_name,
                             uniqueID=uniqueID,
                             welding_value=welding_value,
                             timestamp=curr_time))
-    db.write_points(data, database='client1_db', time_precision='ms', batch_size=5000, protocol="line") #10k before
+    db.write_points(data, database='client1_db', time_precision='ms', batch_size=5000,
+                    protocol="line")  # previous time_precision='n'
 
 
 def checkListDuplicates(listOfElems):
@@ -95,15 +77,13 @@ def on_message(client, userdata, message):
         get_db_data()
 
 
-# broker_address = "broker.hivemq.com" #use external broker
-broker_address = "localhost"  # local broker
+broker_address = "broker.hivemq.com" # use external broker
+# broker_address = "localhost"  # local broker
 
 client = mqtt.Client()  # create new
 client.on_connect = on_connect
 client.on_message = on_message
 client.connect(broker_address, port=1883)  # connect to broker
-
-
 
 generate_data()
 
@@ -118,6 +98,6 @@ print('List of DBs: ', dbs)
 #################################################
 
 time.sleep(4)  # wait
-#db.drop_database('client1_db')
+db.drop_database('client1_db')
 client.loop_stop()  # stop the loop
 client.disconnect()
