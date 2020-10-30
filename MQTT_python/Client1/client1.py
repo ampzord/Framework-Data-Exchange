@@ -2,22 +2,24 @@ import paho.mqtt.client as mqtt
 from influxdb import InfluxDBClient
 import random
 import time
+import sys
 
-# db = InfluxDBClient('localhost', 8086, 'root', 'root', 'client1_db')
-db = InfluxDBClient('192.168.1.10', 8086, 'root', 'root', 'client1_db')
-db.create_database('client1_db')
+
+# TODO find every machine connected to broker and then subscribe it
 
 
 def generate_data():
     measurement_name = "weldingEvents"
-    client_name = "client1"
     number_of_points = 250000
     data = []
+    curr_time = data_end_time
     for i in range(number_of_points):
         welding_value = format(round(random.uniform(0, 30), 4))
-        curr_time = int(time.time() * 1000)
+        # curr_time = int(time.time() * 1000)
+        curr_time = curr_time - random.randint(1, 100)
+
         # curr_time = int(time.time() * 1000000000)
-        uniqueID = 'uniqueID' + str(i + 1)
+        # uniqueID = 'uniqueID' + str(i + 1)
         # data.append("{measurement},client={client},uniqueID={uniqueID} welding_value={welding_value} {timestamp}"
         #            .format(measurement=measurement_name,
         #                    client=client_name,
@@ -26,11 +28,16 @@ def generate_data():
         #                    timestamp=curr_time))
         data.append("{measurement},client={client} welding_value={welding_value} {timestamp}"
                     .format(measurement=measurement_name,
-                            client=client_name,
+                            client=client_id,
                             welding_value=welding_value,
                             timestamp=curr_time))
-    db.write_points(data, database='client1_db', time_precision='n', batch_size=10000,
+
+    client_write_start_time = time.perf_counter()
+    db.write_points(data, database=client_db_name, time_precision='ms', batch_size=10000,
                     protocol="line")  # previous time_precision='n'
+    client_write_end_time = time.perf_counter()
+    print("Client " + client_id + " write ALL data generated to client's DB: {time}s".format(
+        time=client_write_end_time - client_write_start_time))
 
 
 def checkListDuplicates(listOfElems):
@@ -47,7 +54,7 @@ def checkListDuplicates(listOfElems):
 def get_db_data():
     data = db.query("SELECT * FROM weldingEvents;")
     # print('Data raw: ', data.raw)
-    points = data.get_points(tags={'client': 'client1'})
+    points = data.get_points(tags={'client': client_id})
     timestamp_list = []
     for point in points:
         # print("Time: {}, Welding value: {}".format(point['time'], point['welding_value']))
@@ -58,18 +65,24 @@ def get_db_data():
     else:
         print('No duplicates found in list.\n')
 
-    send_data = db.query("SELECT * INTO master_db..weldingEvents FROM client1_db..weldingEvents GROUP BY *;")
+    client_write_start_time = time.perf_counter()
+    send_data = db.query('SELECT * INTO master_db..weldingEvents FROM "client_db_name"..weldingEvents GROUP BY *;')  # ,
+    #  bind_params={"$client_db_name": client_db_name}
+    #  )
+    client_write_end_time = time.perf_counter()
+    print("Client " + client_id + " send ALL data to Master time: {time}s".format(
+        time=client_write_end_time - client_write_start_time))
     print("Query Successful: ", send_data)
-    client.publish("topic/client1", "ALL_INFORMATION_SENT")
+    client.publish(topic_name, "ALL_INFORMATION_SENT")
 
 
 def on_connect(client, userdata, flags, rc):
     if rc != 0:
-        print("Client1 - error connecting, rc: ", rc)
+        print(client_id + " - error connecting, rc: ", rc)
     else:
-        print("Client1 - successfully connected.")
+        print(client_id + " - successfully connected.")
         client.subscribe("topic/master")
-        client.subscribe("topic/client2")
+        # client.subscribe("topic/client2")
 
 
 def on_message(client, userdata, message):
@@ -80,31 +93,41 @@ def on_message(client, userdata, message):
     print("message retain flag: ", message.retain, "\n")
 
     if decoded_message == "GET_INFORMATION":
-        client.publish("topic/client1", "Starting to send all data related to Client 1.")
+        client.publish(topic_name, "Starting to send all data related to " + client_id)
         get_db_data()
 
 
-broker_address = "broker.hivemq.com" # use external broker
-# broker_address = "localhost"  # local broker
+if __name__ == "__main__":
+    machine_number = (sys.argv[1])
+    client_db_name = 'client' + machine_number + '_db'  # client1_db
+    client_id = 'client' + machine_number  # client1
+    topic_name = "topic/" + client_id
 
-client = mqtt.Client()  # create new
-client.on_connect = on_connect
-client.on_message = on_message
-client.connect(broker_address, port=1883)  # connect to broker
+    db = InfluxDBClient('192.168.1.10', 8086, 'root', 'root', client_db_name)  # localhost
+    db.create_database(client_db_name)
 
-generate_data()
+    data_end_time = int(time.time() * 1000)  # milliseconds
+    broker_address = "broker.hivemq.com"  # use external broker
+    # broker_address = "localhost"  # local broker
 
-client.loop_start()
+    client = mqtt.Client()  # create new
+    client.on_connect = on_connect
+    client.on_message = on_message
+    client.connect(broker_address, port=1883)  # connect to broker
 
-print("Waiting 4 seconds...\n")
-time.sleep(10)
+    generate_data()
 
-dbs = db.get_list_database()
-print('List of DBs: ', dbs)
+    client.loop_start()
 
-#################################################
+    print("Waiting 4 seconds...\n")
+    time.sleep(10)
 
-time.sleep(10)  # wait
-db.drop_database('client1_db')
-client.loop_stop()  # stop the loop
-client.disconnect()
+    dbs = db.get_list_database()
+    print('List of DBs: ', dbs)
+
+    #################################################
+
+    time.sleep(10)  # wait
+    db.drop_database(client_db_name)
+    client.loop_stop()  # stop the loop
+    client.disconnect()

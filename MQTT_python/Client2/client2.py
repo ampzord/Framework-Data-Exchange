@@ -7,17 +7,23 @@ import time
 db = InfluxDBClient('192.168.1.10', 8086, 'root', 'root', 'client2_db')
 db.create_database('client2_db')
 
+data_end_time = int(time.time() * 1000)  # milliseconds
+
 
 def generate_data():
     measurement_name = "weldingEvents"
     client_name = "client2"
     number_of_points = 250000
+
     data = []
+    curr_time = data_end_time
     for i in range(number_of_points):
         welding_value = format(round(random.uniform(0, 30), 4))
-        curr_time = int(time.time() * 1000)  # previous int(time.time() * 1000000000)
+        # curr_time = int(time.time() * 1000)
+        curr_time = curr_time - random.randint(1, 100)
+
         # curr_time = int(time.time() * 1000000000)
-        uniqueID = 'uniqueID' + str(i + 1)
+        # uniqueID = 'uniqueID' + str(i + 1)
         # data.append("{measurement},client={client},uniqueID={uniqueID} welding_value={welding_value} {timestamp}"
         #            .format(measurement=measurement_name,
         #                    client=client_name,
@@ -29,8 +35,13 @@ def generate_data():
                             client=client_name,
                             welding_value=welding_value,
                             timestamp=curr_time))
-    db.write_points(data, database='client2_db', time_precision='n', batch_size=10000,
+
+    client_write_start_time = time.perf_counter()
+    db.write_points(data, database='client2_db', time_precision='ms', batch_size=10000,
                     protocol="line")  # previous time_precision='n'
+    client_write_end_time = time.perf_counter()
+    print("Client 2 write ALL data generated to client's DB: {time}s".format(
+        time=client_write_end_time - client_write_start_time))
 
 
 def checkListDuplicates(listOfElems):
@@ -58,7 +69,10 @@ def get_db_data():
     else:
         print('No duplicates found in list.\n')
 
+    client_write_start_time = time.perf_counter()
     send_data = db.query("SELECT * INTO master_db..weldingEvents FROM client2_db..weldingEvents GROUP BY *;")
+    client_write_end_time = time.perf_counter()
+    print("Client 2 send ALL data to Master time: {time}s".format(time=client_write_end_time - client_write_start_time))
     print("Query Successful: ", send_data)
     client.publish("topic/client2", "ALL_INFORMATION_SENT")
 
