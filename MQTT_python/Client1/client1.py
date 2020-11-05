@@ -66,9 +66,19 @@ def get_db_data():
         print('No duplicates found in list.\n')
 
     client_write_start_time = time.perf_counter()
-    send_data = db.query('SELECT * INTO master_db..weldingEvents FROM "client_db_name"..weldingEvents GROUP BY *;')  # ,
-    #  bind_params={"$client_db_name": client_db_name}
-    #  )
+
+
+    params = {"client_db_name": client_db_name}
+    send_data = db.query('SELECT * INTO master_db..weldingEvents FROM client_db_name WHERE client_db_name=$client_db_name GROUP BY *;', bind_params=params)  # ,
+
+    '''
+    query('SELECT * FROM alerts '
+          'WHERE time>=$start AND time<$stop '
+          'AND client_id=$client AND rule_id=$rule',
+          bind_params=params
+          )
+    '''
+
     client_write_end_time = time.perf_counter()
     print("Client " + client_id + " send ALL data to Master time: {time}s".format(
         time=client_write_end_time - client_write_start_time))
