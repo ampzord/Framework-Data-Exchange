@@ -30,20 +30,23 @@ def on_message(client, userdata, message):
 
 def get_db_data():
     data = db.query("SELECT * FROM weldingEvents;")
-    print("data: ", data)
-    # points = data.get_points(tags={'measurement': 'weldingEvents'})
-    # print("Master DB: \n", data.raw)
-    # for point in points:
-    # print("Time: {}, Welding value: {}".format(point['time'], point['welding_value']))
+    # print("data: ", data)
+    points = data.get_points(tags={'measurement': 'weldingEvents'})
+    print("Master DB: \n", data.raw)
+    for point in points:
+        print("Time: {}, Welding value: {}".format(point['time'], point['welding_value']))
 
-    new_data = db.query("SELECT count(welding_value) FROM weldingEvents;")
-    all_events = list(new_data.get_points(measurement='weldingEvents'))
-    print('Total Welding value count: ', all_events[0]['count'])
+    '''
+    try:
+        new_data = db.query("SELECT count(welding_value) FROM weldingEvents;")
+        all_events = list(new_data.get_points(measurement='weldingEvents'))
+        print('Total Welding value count: ', all_events[0]['count'])
+    except "CountError":
+        print("Error counting number of total welding values reached Master DB.")
+    '''
 
 
-broker_address = "broker.hivemq.com"  # use external broker
-# broker_address = "localhost"  # local broker
-
+broker_address = "broker.hivemq.com"  # broker_address = "localhost"
 master = mqtt.Client()  # create new instance
 master.on_connect = on_connect
 master.on_message = on_message
@@ -51,13 +54,13 @@ master.connect(broker_address, port=1883)  # connect to broker
 master.loop_start()
 
 print("Waiting 4 seconds...\n")
-time.sleep(10)
+time.sleep(5)
 
 master.publish("topic/master", "GET_INFORMATION")
 
 #################################################
 
-time.sleep(15)  # wait
+time.sleep(5)  # wait
 get_db_data()
 print('List of DBs: ', db.get_list_database())
 
