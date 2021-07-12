@@ -4,7 +4,6 @@ import random
 import time
 import sys
 
-
 # TODO find every machine connected to broker and then subscribe it
 
 
@@ -15,10 +14,8 @@ def generate_data():
     curr_time = data_end_time
     for i in range(number_of_points):
         welding_value = format(round(random.uniform(0, 30), 4))
-        # curr_time = int(time.time() * 1000)
-        curr_time = curr_time - random.randint(1, 100)
+        curr_time = curr_time - random.randint(1, 1000000)  # curr_time = int(time.time() * 1000), int(time.time() * 1000000000)
 
-        # curr_time = int(time.time() * 1000000000)
         # uniqueID = 'uniqueID' + str(i + 1)
         # data.append("{measurement},client={client},uniqueID={uniqueID} welding_value={welding_value} {timestamp}"
         #            .format(measurement=measurement_name,
@@ -40,33 +37,33 @@ def generate_data():
         time=client_write_end_time - client_write_start_time))
 
 
-def checkListDuplicates(listOfElems):
-    # Check if given list contains any duplicates
-    setOfElems = set()
-    for elem in listOfElems:
-        if elem in setOfElems:
+def check_if_list_has_duplicates(list):
+    set_of_elems = set()
+    for elem in list:
+        if elem in set_of_elems:
             return True
         else:
-            setOfElems.add(elem)
+            set_of_elems.add(elem)
     return False
 
 
 def get_db_data():
     data = db.query("SELECT * FROM weldingEvents;")
-    # print('Data raw: ', data.raw)
+    print('Data raw: ', data.raw)
     points = data.get_points(tags={'client': client_id})
     timestamp_list = []
     for point in points:
         # print("Time: {}, Welding value: {}".format(point['time'], point['welding_value']))
         timestamp_list.append(point['time'])
 
-    if checkListDuplicates(timestamp_list):
+    if check_if_list_has_duplicates(timestamp_list):
         print('Yes, list contains duplicates.\n')
     else:
         print('No duplicates found in list.\n')
 
+    db.switch_database(client_db_name)
     client_write_start_time = time.perf_counter()
-    send_data = db.query('SELECT * INTO master_db..weldingEvents FROM "client_db_name"..weldingEvents GROUP BY *;')  # ,
+    send_data = db.query('SELECT * INTO master_db..weldingEvents FROM weldingEvents GROUP BY *;')  # ,
     #  bind_params={"$client_db_name": client_db_name}
     #  )
     client_write_end_time = time.perf_counter()
@@ -74,6 +71,12 @@ def get_db_data():
         time=client_write_end_time - client_write_start_time))
     print("Query Successful: ", send_data)
     client.publish(topic_name, "ALL_INFORMATION_SENT")
+    '''
+     remove_data = db.query(
+         query='DROP SERIES FROM weldingEvents WHERE client=$client;',
+         params={"client": client_id}
+     )
+     '''
 
 
 def on_connect(client, userdata, flags, rc):
@@ -103,13 +106,11 @@ if __name__ == "__main__":
     client_id = 'client' + machine_number  # client1
     topic_name = "topic/" + client_id
 
-    db = InfluxDBClient('192.168.1.10', 8086, 'root', 'root', client_db_name)  # localhost
+    db = InfluxDBClient('192.168.1.8', 8086, 'root', 'root', client_db_name)  # localhost
     db.create_database(client_db_name)
 
     data_end_time = int(time.time() * 1000)  # milliseconds
-    broker_address = "broker.hivemq.com"  # use external broker
-    # broker_address = "localhost"  # local broker
-
+    broker_address = "broker.hivemq.com"  # broker_address = "localhost"
     client = mqtt.Client()  # create new
     client.on_connect = on_connect
     client.on_message = on_message
@@ -128,6 +129,13 @@ if __name__ == "__main__":
     #################################################
 
     time.sleep(10)  # wait
+    query = "DROP SERIES FROM weldingEvents WHERE client=$client;"
+    bind_params = {'client': client_id}
+    remove_data = db.query(query, bind_params=bind_params)
+    print("Removed data after query successful: ", remove_data)
+
+    data = db.query("SELECT * FROM weldingEvents;")
+    print('AFTER DELETION: ', data.raw)
     db.drop_database(client_db_name)
     client.loop_stop()  # stop the loop
     client.disconnect()
