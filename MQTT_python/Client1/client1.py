@@ -4,12 +4,10 @@ import random
 import time
 import sys
 
-# TODO find every machine connected to broker and then subscribe it
-
 
 def generate_data():
     measurement_name = "weldingEvents"
-    number_of_points = 250000
+    number_of_points = 20000
     data = []
     curr_time = data_end_time
     for i in range(number_of_points):
@@ -28,18 +26,21 @@ def generate_data():
                             client=client_id,
                             welding_value=welding_value,
                             timestamp=curr_time))
+    return data
 
+
+def store_data(data):
     client_write_start_time = time.perf_counter()
     db.write_points(data, database=client_db_name, time_precision='ms', batch_size=10000,
                     protocol="line")  # previous time_precision='n'
     client_write_end_time = time.perf_counter()
-    print("Client " + client_id + " write ALL data generated to client's DB: {time}s".format(
+    print(client_id + " wrote ALL generated Data to Client DB in: {time}s".format(
         time=client_write_end_time - client_write_start_time))
 
 
-def check_if_list_has_duplicates(list):
+def has_duplicate(tmp_list):
     set_of_elems = set()
-    for elem in list:
+    for elem in tmp_list:
         if elem in set_of_elems:
             return True
         else:
@@ -49,26 +50,28 @@ def check_if_list_has_duplicates(list):
 
 def get_db_data():
     data = db.query("SELECT * FROM weldingEvents;")
-    print('Data raw: ', data.raw)
+    # print('Data raw: ', data.raw)
     points = data.get_points(tags={'client': client_id})
     timestamp_list = []
     for point in points:
         # print("Time: {}, Welding value: {}".format(point['time'], point['welding_value']))
         timestamp_list.append(point['time'])
 
-    if check_if_list_has_duplicates(timestamp_list):
-        print('Yes, list contains duplicates.\n')
+    if has_duplicate(timestamp_list):
+        print('Yes, client\'s database contains duplicate timestamps.\n')
     else:
-        print('No duplicates found in list.\n')
+        print('No duplicate timestamp found in client\'s database.\n')
 
+
+def send_client_data():
     db.switch_database(client_db_name)
     client_write_start_time = time.perf_counter()
-    # send_data = db.query('SELECT * INTO master_db..weldingEvents FROM weldingEvents GROUP BY *;')  # ,
-    #  bind_params={"$client_db_name": client_db_name}
-    #  )
+    send_data = db.query('SELECT * INTO master_db..weldingEvents FROM weldingEvents GROUP BY *;')
+    # bind_params={"$client_db_name": client_db_name}
+    # )
 
-    params = {"client_db_name": client_db_name}
-    send_data = db.query('SELECT * INTO master_db..weldingEvents FROM client_db_name WHERE client_db_name=$client_db_name GROUP BY *;', bind_params=params)  # ,
+    # params = {"client_db_name": client_db_name}
+    # send_data = db.query('SELECT * INTO master_db..weldingEvents FROM client_db_name WHERE client_db_name=$client_db_name GROUP BY *;', bind_params=params)  # ,
 
     '''
     query('SELECT * FROM alerts '
@@ -79,7 +82,7 @@ def get_db_data():
     '''
 
     client_write_end_time = time.perf_counter()
-    print("Client " + client_id + " send ALL data to Master time: {time}s".format(
+    print(client_id + " sent ALL Data to Master\'s DB in: {time}s".format(
         time=client_write_end_time - client_write_start_time))
     print("Query Successful: ", send_data)
     client.publish(topic_name, "ALL_INFORMATION_SENT")
@@ -109,7 +112,25 @@ def on_message(client, userdata, message):
 
     if decoded_message == "GET_INFORMATION":
         client.publish(topic_name, "Starting to send all data related to " + client_id)
-        get_db_data()
+        get_db_data() # used to confirm if data is valid (no repeated timestamps)
+        send_client_data()
+
+
+def clear_data(client_db):
+    query = "DROP SERIES FROM weldingEvents WHERE client=$client;"
+    bind_params = {'client': client_id}
+    remove_data = client_db.query(query, bind_params=bind_params)
+    print("Removed data after sending its data to Master's Database: ", remove_data)
+
+    # data = database.query("SELECT * FROM weldingEvents;")
+    # print('AFTER DELETION: ', data.raw)
+
+
+def mqtt_init(tmp_client):
+    tmp_client.on_connect = on_connect
+    tmp_client.on_message = on_message
+    broker_address = "broker.hivemq.com"  # broker_address = "localhost"
+    tmp_client.connect(broker_address, port=1883)  # connect to broker
 
 
 if __name__ == "__main__":
@@ -122,17 +143,16 @@ if __name__ == "__main__":
     db.create_database(client_db_name)
 
     data_end_time = int(time.time() * 1000)  # milliseconds
-    broker_address = "broker.hivemq.com"  # broker_address = "localhost"
-    client = mqtt.Client()  # create new
-    client.on_connect = on_connect
-    client.on_message = on_message
-    client.connect(broker_address, port=1883)  # connect to broker
 
-    generate_data()
+    client = mqtt.Client()  # create new
+    mqtt_init(client)
+
+    machine_data = generate_data()
+    store_data(machine_data)
 
     client.loop_start()
 
-    print("Waiting 4 seconds...\n")
+    print("Waiting 10 seconds...\n")
     time.sleep(10)
 
     dbs = db.get_list_database()
@@ -140,14 +160,10 @@ if __name__ == "__main__":
 
     #################################################
 
+    print("Waiting 10 seconds...\n")
     time.sleep(10)  # wait
-    query = "DROP SERIES FROM weldingEvents WHERE client=$client;"
-    bind_params = {'client': client_id}
-    remove_data = db.query(query, bind_params=bind_params)
-    print("Removed data after query successful: ", remove_data)
 
-    data = db.query("SELECT * FROM weldingEvents;")
-    print('AFTER DELETION: ', data.raw)
+    clear_data(db)
     db.drop_database(client_db_name)
     client.loop_stop()  # stop the loop
     client.disconnect()
