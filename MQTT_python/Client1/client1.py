@@ -9,10 +9,10 @@ def generate_data():
     measurement_name = "weldingEvents"
     number_of_points = 20000
     data = []
-    curr_time = data_end_time
+    curr_time = tmp_time
     for i in range(number_of_points):
         welding_value = format(round(random.uniform(0, 30), 4))
-        curr_time = curr_time - random.randint(1, 1000000)  # curr_time = int(time.time() * 1000), int(time.time() * 1000000000)
+        curr_time = curr_time - random.randint(1,1000000)  # curr_time = int(time.time() * 1000), int(time.time() * 1000000000)
 
         # uniqueID = 'uniqueID' + str(i + 1)
         # data.append("{measurement},client={client},uniqueID={uniqueID} welding_value={welding_value} {timestamp}"
@@ -59,6 +59,7 @@ def get_db_data():
 
     if has_duplicate(timestamp_list):
         print('Yes, client\'s database contains duplicate timestamps.\n')
+        client.publish(topic_name, "REPEATED_TIMESTAMP")
     else:
         print('No duplicate timestamp found in client\'s database.\n')
 
@@ -86,6 +87,9 @@ def send_client_data():
         time=client_write_end_time - client_write_start_time))
     print("Query Successful: ", send_data)
     client.publish(topic_name, "ALL_INFORMATION_SENT")
+    global CLIENT_SENT_ALL_DATA
+    CLIENT_SENT_ALL_DATA = True
+
     '''
      remove_data = db.query(
          query='DROP SERIES FROM weldingEvents WHERE client=$client;',
@@ -99,28 +103,28 @@ def on_connect(client, userdata, flags, rc):
         print(client_id + " - error connecting, rc: ", rc)
     else:
         print(client_id + " - successfully connected.")
-        client.subscribe("topic/master")
-        # client.subscribe("topic/client2")
+        client.subscribe("topic/simulation/clients/#")  # subscribes to every topic of clients including itself
+        client.subscribe("topic/simulation/master")
 
 
 def on_message(client, userdata, message):
     decoded_message = str(message.payload.decode("utf-8"))
-    print("message received: ", decoded_message)
-    print("message topic: ", message.topic)
-    print("message qos: ", message.qos)  # 0, 1 or 2.
-    print("message retain flag: ", message.retain, "\n")
+    if "topic/simulation/clients/" not in message.topic:
+        print("message received: ", decoded_message)
+        print("message topic: ", message.topic)
+        print("message qos: ", message.qos)  # 0, 1 or 2.
+        print("message retain flag: ", message.retain, "\n")
 
-    if decoded_message == "GET_INFORMATION":
-        client.publish(topic_name, "Starting to send all data related to " + client_id)
-        get_db_data() # used to confirm if data is valid (no repeated timestamps)
-        send_client_data()
+    if decoded_message == "GET_INFORMATION" and message.topic == "topic/simulation/master":
+        global MASTER_REQ_INFO
+        MASTER_REQ_INFO = True
 
 
 def clear_data(client_db):
     query = "DROP SERIES FROM weldingEvents WHERE client=$client;"
     bind_params = {'client': client_id}
     remove_data = client_db.query(query, bind_params=bind_params)
-    print("Removed data after sending its data to Master's Database: ", remove_data)
+    # print("Removed data after sending its data to Master's Database: ", remove_data)
 
     # data = database.query("SELECT * FROM weldingEvents;")
     # print('AFTER DELETION: ', data.raw)
@@ -134,36 +138,41 @@ def mqtt_init(tmp_client):
 
 
 if __name__ == "__main__":
+    CLIENT_SENT_ALL_DATA = False
+    MASTER_REQ_INFO = False
     machine_number = (sys.argv[1])
     client_db_name = 'client' + machine_number + '_db'  # client1_db
     client_id = 'client' + machine_number  # client1
-    topic_name = "topic/" + client_id
+    topic_name = "topic/simulation/clients/" + client_id
 
     db = InfluxDBClient('192.168.1.8', 8086, 'root', 'root', client_db_name)  # localhost
     db.create_database(client_db_name)
 
-    data_end_time = int(time.time() * 1000)  # milliseconds
-
-    client = mqtt.Client()
-    mqtt_init(client)
+    tmp_time = int(time.time() * 1000)  # milliseconds
 
     machine_data = generate_data()
     store_data(machine_data)
 
+    client = mqtt.Client()
+    mqtt_init(client)
     client.loop_start()
 
-    print("Waiting 10 seconds...\n")
-    time.sleep(10)
+    while not MASTER_REQ_INFO:
+        pass
 
-    dbs = db.get_list_database()
-    print('List of DBs: ', dbs)
+    client.publish(topic_name, "SENDING_DATA")
+    get_db_data()  # used to confirm if data is valid (no repeated timestamps)
+    send_client_data()
 
-    #################################################
-
-    print("Waiting 10 seconds...\n")
-    time.sleep(10)
+    while not CLIENT_SENT_ALL_DATA:
+        pass
 
     clear_data(db)
     db.drop_database(client_db_name)
     client.loop_stop()
     client.disconnect()
+    input("Press the <ENTER> key to continue...")
+
+    # dbs = db.get_list_database()
+    # print('List of DBs: ', dbs)
+
