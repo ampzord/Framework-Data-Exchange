@@ -8,6 +8,16 @@
 
 TODO List:
     ✔ Add another client to Master DB @started(21-07-14 17:39) @done(21-07-14 17:46) @lasted(7m49s)
+    ✔ Test current iteration with 10 clients with a total of 200k batch (20k each client) : @started(21-07-15 17:43) @done(21-07-15 19:06) @lasted(1h23m54s)
+        Each client writes 20k;
+        In total 200k
+        ✔ Create script to launch every client at the same time @started(21-07-15 17:43) @done(21-07-15 19:06) @lasted(1h23m45s)
+    ☐ Test current scenario of (10 clients and 200k batch) without delay's.
+    ☐ Confirm previous solution of uniqueID that the lag with grafana is unbearable
+        This solution previously gave very big problems in performance when done with big values
+        Grafana would lag intensivelly when using a uniqueID for each entry of the database
+        Objective of this step is to confirm that the lag is impossible to work it
+
 
 
 
@@ -41,8 +51,8 @@ Questions:
     ☐ When doing Quality Assurance of each Controller with what values we exactly intend to check it's performance:
         At the moment we are generating each client's data randomly (welding_value between 0-30 with 4 decimal cases) e.g.: 15,4567
         Another problem risen from this is the timestamp is being generated random to prevent any timestamp to be repeated making it impossible to write to the database 
-        (it only inserts 1 entry if the timestamp is equal, therefore losing welding values).
-        We need to try to get Grafana to work with controller's quality.
+        (it only inserts 1 entry if the timestamp is equal, therefore losing welding value entries).
+        We need to try to get Grafana to work with controller's quality. (visualize QA with grafana)
     ☐ What is the unit value of welding_value ?
 
 

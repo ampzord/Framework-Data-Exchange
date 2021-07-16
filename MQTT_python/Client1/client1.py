@@ -144,7 +144,7 @@ if __name__ == "__main__":
 
     data_end_time = int(time.time() * 1000)  # milliseconds
 
-    client = mqtt.Client()  # create new
+    client = mqtt.Client()
     mqtt_init(client)
 
     machine_data = generate_data()
@@ -161,9 +161,9 @@ if __name__ == "__main__":
     #################################################
 
     print("Waiting 10 seconds...\n")
-    time.sleep(10)  # wait
+    time.sleep(10)
 
     clear_data(db)
     db.drop_database(client_db_name)
-    client.loop_stop()  # stop the loop
+    client.loop_stop()
     client.disconnect()
