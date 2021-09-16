@@ -47,7 +47,7 @@ def on_message(client, userdata, message):
             global ALL_DATA_RECEIVED
             ALL_DATA_RECEIVED = True
             req_end_time = time.perf_counter()
-            print("Simulation took: {time}s".format(time=req_end_time - req_start_time))
+            print("Simulation took: {time} seconds".format(time=req_end_time - req_start_time))
 
         try:
             client_name = message.topic.split('/')
@@ -122,5 +122,5 @@ if __name__ == "__main__":
         pass
 
     # Terminate connection
-    db.drop_database('master_db')
-    mqtt_terminate()
+    #db.drop_database('master_db')
+    mqtt_terminate(master)

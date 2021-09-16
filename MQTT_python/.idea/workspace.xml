@@ -5,6 +5,7 @@
       <change beforePath="$PROJECT_DIR$/.idea/MQTT_python.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/MQTT_python.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/master.py" beforeDir="false" afterPath="$PROJECT_DIR$/master.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -26,7 +27,7 @@
     <property name="last_opened_file_path" value="$PROJECT_DIR$/client.py" />
     <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
   </component>
-  <component name="RunManager" selected="Python.client">
+  <component name="RunManager" selected="Python.master">
     <configuration name="client" type="PythonConfigurationType" factoryName="Python">
       <module name="MQTT_python" />
       <option name="INTERPRETER_OPTIONS" value="" />
