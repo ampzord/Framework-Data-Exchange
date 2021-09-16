@@ -5,16 +5,34 @@ import sys
 
 
 def on_connect(client, userdata, flags, rc):
+    """
+    MQTT connect protocol
+
+    RC:
+    0: Connection successful
+    1: Connection refused – incorrect protocol version
+    2: Connection refused – invalid client identifier
+    3: Connection refused – server unavailable
+    4: Connection refused – bad username or password
+    5: Connection refused – not authorised
+    6-255: Currently unused.
+    """
+
     if rc != 0:
-        print("Master - error connecting, rc: ", rc)
+        print("Master - Error connecting to Broker. Return Code: ", rc)
     else:
-        print("Master - successfully connected.\n")
+        print("Master - Successfully connected to Broker.\n")
+        print("Master - Subscribing to every Client topic.\n")
         client.subscribe("topic/simulation/clients/#")
 
 
 def on_message(client, userdata, message):
+    """
+    Receives the messages that are published through the broker
+    """
+
     decoded_message = str(message.payload.decode("utf-8"))
-    DEBUG = False
+    DEBUG = True
     if DEBUG:
         print("message received: ", decoded_message)
         print("message topic: ", message.topic)
@@ -35,24 +53,41 @@ def on_message(client, userdata, message):
             client_name = message.topic.split('/')
             client.publish("topic/simulation/master", "Master received all data from " + client_name[3])
         except ValueError:
-            print("Error splitting topic string")
+            print("Error splitting topic string in " + client_name[3])
 
 
 def mqtt_init(tmp_master):
+    """
+    Connects to Broker and initializes protocols
+    """
+
     tmp_master.on_connect = on_connect
     tmp_master.on_message = on_message
     broker_address = "broker.hivemq.com"  # broker_address = "localhost"
     tmp_master.connect(broker_address, port=1883)  # connect to broker
 
 
+def mqtt_terminate(tmp_master):
+    """
+    Stops MQTT loop and disconnects client
+    """
+
+    tmp_master.loop_stop()
+    tmp_master.disconnect()
+
+
 def get_db_data():
+    """
+    Queries master's DB to print the total number of
+    welding_value that reached master's DB from its clients.
+    """
+
     data = db.query("SELECT * FROM weldingEvents;")
     # print("data: ", data)
     points = data.get_points(tags={'measurement': 'weldingEvents'})
     # print("Master DB: \n", data.raw)
-    for point in points:
-        print()
-        # print("Time: {}, Welding value: {}".format(point['time'], point['welding_value']))
+    # for point in points:
+    # print("Time: {}, Welding value: {}".format(point['time'], point['welding_value']))
 
     try:
         new_data = db.query("SELECT count(welding_value) FROM weldingEvents;")
@@ -64,13 +99,19 @@ def get_db_data():
 
 if __name__ == "__main__":
 
-    ALL_DATA_RECEIVED = False
-    RECEIVED_DATA_FROM_CLIENT_COUNT = 0
+    # Arguments
     client_size = int(sys.argv[1])
 
+    # Global Variables
+    ALL_DATA_RECEIVED = False
+    RECEIVED_DATA_FROM_CLIENT_COUNT = 0
+
+    # InfluxDB
     db = InfluxDBClient('localhost', 8086, 'root', 'root', 'master_db')
     db.create_database('master_db')
-    master = mqtt.Client()
+
+    # Broker
+    master = mqtt.Client("master")
     mqtt_init(master)
 
     req_start_time = time.perf_counter()
@@ -80,11 +121,6 @@ if __name__ == "__main__":
     while not ALL_DATA_RECEIVED:
         pass
 
+    # Terminate connection
     db.drop_database('master_db')
-    master.loop_stop()
-    master.disconnect()
-
-
-
-
-
+    mqtt_terminate()

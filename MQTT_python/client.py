@@ -6,6 +6,10 @@ import sys
 
 
 def generate_data():
+    """
+    Generates the welding values with its assigned timestamps to be inserted in the DB.
+    """
+
     measurement_name = "weldingEvents"
     number_of_points = 20000
     data = []
@@ -30,6 +34,10 @@ def generate_data():
 
 
 def store_data(data):
+    """
+    Writes the generated information to the DB.
+    """
+
     client_write_start_time = time.perf_counter()
     db.write_points(data, database=client_db_name, time_precision='ms', batch_size=10000,
                     protocol="line")  # previous time_precision='n'
@@ -39,6 +47,12 @@ def store_data(data):
 
 
 def has_duplicate(tmp_list):
+    """
+    Checks to see if a given list has any duplicate value.
+
+    :returns: False if list has no duplicate.
+    """
+
     set_of_elems = set()
     for elem in tmp_list:
         if elem in set_of_elems:
@@ -49,6 +63,10 @@ def has_duplicate(tmp_list):
 
 
 def get_db_data():
+    """
+    Checks if client's DB has any duplicate value timestamp
+    """
+
     data = db.query("SELECT * FROM weldingEvents;")
     # print('Data raw: ', data.raw)
     points = data.get_points(tags={'client': client_id})
@@ -65,6 +83,9 @@ def get_db_data():
 
 
 def send_client_data():
+    """
+    Send client's DB to master's DB
+    """
     db.switch_database(client_db_name)
     client_write_start_time = time.perf_counter()
     send_data = db.query('SELECT * INTO master_db..weldingEvents FROM weldingEvents GROUP BY *;')
@@ -99,6 +120,19 @@ def send_client_data():
 
 
 def on_connect(client, userdata, flags, rc):
+    """
+    MQTT connect protocol
+
+    RC:
+    0: Connection successful
+    1: Connection refused – incorrect protocol version
+    2: Connection refused – invalid client identifier
+    3: Connection refused – server unavailable
+    4: Connection refused – bad username or password
+    5: Connection refused – not authorised
+    6-255: Currently unused.
+    """
+
     if rc != 0:
         print(client_id + " - error connecting, rc: ", rc)
     else:
@@ -108,6 +142,10 @@ def on_connect(client, userdata, flags, rc):
 
 
 def on_message(client, userdata, message):
+    """
+    Receives the messages that are published through the broker
+    """
+
     decoded_message = str(message.payload.decode("utf-8"))
     if "topic/simulation/clients/" not in message.topic:
         print("message received: ", decoded_message)
@@ -121,16 +159,23 @@ def on_message(client, userdata, message):
 
 
 def clear_data(client_db):
+    """
+    Clears every value from client's DB.
+    """
+
     query = "DROP SERIES FROM weldingEvents WHERE client=$client;"
     bind_params = {'client': client_id}
     remove_data = client_db.query(query, bind_params=bind_params)
     # print("Removed data after sending its data to Master's Database: ", remove_data)
-
     # data = database.query("SELECT * FROM weldingEvents;")
     # print('AFTER DELETION: ', data.raw)
 
 
 def mqtt_init(tmp_client):
+    """
+    Connects to Broker and initializes protocols
+    """
+
     tmp_client.on_connect = on_connect
     tmp_client.on_message = on_message
     broker_address = "broker.hivemq.com"  # broker_address = "localhost"

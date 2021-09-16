@@ -1,25 +1,49 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="BranchesTreeState">
-    <expand>
-      <path>
-        <item name="ROOT" type="e8cecc67:BranchNodeDescriptor" />
-        <item name="LOCAL_ROOT" type="e8cecc67:BranchNodeDescriptor" />
-      </path>
-      <path>
-        <item name="ROOT" type="e8cecc67:BranchNodeDescriptor" />
-        <item name="REMOTE_ROOT" type="e8cecc67:BranchNodeDescriptor" />
-      </path>
-      <path>
-        <item name="ROOT" type="e8cecc67:BranchNodeDescriptor" />
-        <item name="REMOTE_ROOT" type="e8cecc67:BranchNodeDescriptor" />
-        <item name="GROUP_NODE:origin" type="e8cecc67:BranchNodeDescriptor" />
-      </path>
-    </expand>
-    <select />
-  </component>
   <component name="ChangeListManager">
-    <list default="true" id="e9983bcd-eb67-4a91-a367-9b0aa73c17c2" name="Default Changelist" comment="" />
+    <list default="true" id="e8c2bfd9-37be-4fc3-8845-b11f781ad1f7" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/../.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/../.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/MQTT_python.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/MQTT_python.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Client1/.idea/Client1.iml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Client1/.idea/misc.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Client1/.idea/modules.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Client1/.idea/workspace.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Client1/client1.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Client1/clients.bat" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Master/.idea/Client1.iml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Master/.idea/misc.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Master/.idea/modules.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Master/.idea/workspace.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Master/master.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TODOList.TODO" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/mos158/ChangeLog.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/mos158/Uninstall.exe" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/mos158/aclfile.example" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/mos158/devel/mosquitto.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/mos158/devel/mosquitto.lib" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/mos158/devel/mosquitto_plugin.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/mos158/devel/mosquittopp.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/mos158/devel/mosquittopp.lib" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/mos158/edl-v10" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/mos158/epl-v10" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/mos158/libcrypto-1_1-x64.dll" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/mos158/libssl-1_1-x64.dll" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/mos158/mosquitto.conf" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/mos158/mosquitto.dll" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/mos158/mosquitto.exe" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/mos158/mosquitto_passwd.exe" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/mos158/mosquitto_pub.exe" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/mos158/mosquitto_sub.exe" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/mos158/mosquittopp.dll" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/mos158/pwfile.example" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/mos158/readme-windows.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/mos158/readme.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/mos158/websocks.txt" beforeDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -28,7 +52,7 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
   </component>
-  <component name="ProjectId" id="1iBC6Yn9AneHG8PPhiLp6GnQSgQ" />
+  <component name="ProjectId" id="1wrBa4YRWQJxO49DeZcZne8CELE" />
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
@@ -36,70 +60,25 @@
   </component>
   <component name="PropertiesComponent">
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/master.py" />
+    <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
   </component>
-  <component name="RecentsManager">
-    <key name="CopyFile.RECENT_KEYS">
-      <recent name="D:\HARD DRIVE\Documents\FEUP\TESE\MQTT_python\MQTT_python" />
-    </key>
-  </component>
-  <component name="RunManager" selected="Python.master (1)">
-    <configuration name="client1 (1)" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+  <component name="RunManager">
+    <configuration name="master" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
       <module name="MQTT_python" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
       <envs>
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/Client1" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/Client1/client1.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
-    <configuration name="client2 (1)" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
-      <module name="MQTT_python" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/Client2" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/Client2/client2.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
-    <configuration name="master (1)" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="C:\Users\Amp-PC\AppData\Local\Programs\Python\Python38-32\python.exe" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/Master" />
+      <option name="SDK_HOME" value="C:\Python38\python.exe" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
       <option name="IS_MODULE_SDK" value="false" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <module name="" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/Master/master.py" />
-      <option name="PARAMETERS" value="" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/master.py" />
+      <option name="PARAMETERS" value="10" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
       <option name="MODULE_MODE" value="false" />
@@ -107,26 +86,15 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <list>
-      <item itemvalue="Python.client1 (1)" />
-      <item itemvalue="Python.client2 (1)" />
-      <item itemvalue="Python.master (1)" />
-    </list>
-    <recent_temporary>
-      <list>
-        <item itemvalue="Python.client1 (1)" />
-        <item itemvalue="Python.client2 (1)" />
-      </list>
-    </recent_temporary>
   </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
-      <changelist id="e9983bcd-eb67-4a91-a367-9b0aa73c17c2" name="Default Changelist" comment="" />
-      <created>1601371423658</created>
+      <changelist id="e8c2bfd9-37be-4fc3-8845-b11f781ad1f7" name="Default Changelist" comment="" />
+      <created>1629206888480</created>
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
-      <updated>1601371423658</updated>
+      <updated>1629206888480</updated>
     </task>
     <servers />
   </component>
@@ -141,70 +109,5 @@
       </map>
     </option>
     <option name="oldMeFiltersMigrated" value="true" />
-  </component>
-  <component name="WindowStateProjectService">
-    <state x="414" y="175" key="#com.intellij.execution.impl.EditConfigurationsDialog" timestamp="1603300396036">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state x="414" y="175" key="#com.intellij.execution.impl.EditConfigurationsDialog/0.0.1920.1040/1920.-76.1920.1040@0.0.1920.1040" timestamp="1603300396036" />
-    <state x="740" y="261" key="FileChooserDialogImpl" timestamp="1602779438955">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state x="740" y="261" key="FileChooserDialogImpl/0.0.1920.1040/1920.-76.1920.1040@0.0.1920.1040" timestamp="1602779438954" />
-    <state x="828" y="418" key="Github.ShareDialog" timestamp="1602779068960">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state x="828" y="418" key="Github.ShareDialog/0.0.1920.1040/1920.-76.1920.1040@0.0.1920.1040" timestamp="1602779068960" />
-<<<<<<< HEAD
-<<<<<<< HEAD
-    <state width="1515" height="210" key="GridCell.Tab.0.bottom" timestamp="1603305263753">
-      <screen x="0" y="0" width="1536" height="824" />
-    </state>
-    <state width="1899" height="348" key="GridCell.Tab.0.bottom/0.0.1920.1040/1920.-76.1920.1040@0.0.1920.1040" timestamp="1603316904786" />
-    <state width="1899" height="348" key="GridCell.Tab.0.center" timestamp="1603316904786">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state width="1899" height="348" key="GridCell.Tab.0.center/0.0.1920.1040/1920.-76.1920.1040@0.0.1920.1040" timestamp="1603316904786" />
-    <state width="1899" height="348" key="GridCell.Tab.0.left" timestamp="1603316904786">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state width="1899" height="348" key="GridCell.Tab.0.left/0.0.1920.1040/1920.-76.1920.1040@0.0.1920.1040" timestamp="1603316904786" />
-    <state width="1899" height="348" key="GridCell.Tab.0.right" timestamp="1603316904786">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state width="1899" height="213" key="GridCell.Tab.0.bottom" timestamp="1603305267743">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state width="1899" height="213" key="GridCell.Tab.0.bottom/0.0.1920.1040/1920.-76.1920.1040@0.0.1920.1040" timestamp="1603305267743" />
-    <state width="1899" height="213" key="GridCell.Tab.0.center" timestamp="1603305267743">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state width="1899" height="213" key="GridCell.Tab.0.center/0.0.1920.1040/1920.-76.1920.1040@0.0.1920.1040" timestamp="1603305267743" />
-    <state width="1899" height="213" key="GridCell.Tab.0.left" timestamp="1603305267743">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state width="1899" height="213" key="GridCell.Tab.0.left/0.0.1920.1040/1920.-76.1920.1040@0.0.1920.1040" timestamp="1603305267743" />
-    <state width="1899" height="213" key="GridCell.Tab.0.right" timestamp="1603305267743">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state width="1899" height="213" key="GridCell.Tab.0.right/0.0.1920.1040/1920.-76.1920.1040@0.0.1920.1040" timestamp="1603305267743" />
-    <state width="1899" height="348" key="GridCell.Tab.1.bottom" timestamp="1603304898570">
-    <state width="1899" height="348" key="GridCell.Tab.0.right/0.0.1920.1040/1920.-76.1920.1040@0.0.1920.1040" timestamp="1603316904786" />
-    <state width="1899" height="348" key="GridCell.Tab.1.bottom" timestamp="1603316904786">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state width="1899" height="348" key="GridCell.Tab.1.bottom/0.0.1920.1040/1920.-76.1920.1040@0.0.1920.1040" timestamp="1603316904786" />
-    <state width="1899" height="348" key="GridCell.Tab.1.center" timestamp="1603316904786">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state width="1899" height="348" key="GridCell.Tab.1.center/0.0.1920.1040/1920.-76.1920.1040@0.0.1920.1040" timestamp="1603316904786" />
-    <state width="1899" height="348" key="GridCell.Tab.1.left" timestamp="1603316904786">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state width="1899" height="348" key="GridCell.Tab.1.left/0.0.1920.1040/1920.-76.1920.1040@0.0.1920.1040" timestamp="1603316904786" />
-    <state width="1899" height="348" key="GridCell.Tab.1.right" timestamp="1603316904786">
-      <screen x="0" y="0" width="1920" height="1040" />
-    </state>
-    <state width="1899" height="348" key="GridCell.Tab.1.right/0.0.1920.1040/1920.-76.1920.1040@0.0.1920.1040" timestamp="1603316904786" />
   </component>
 </project>
