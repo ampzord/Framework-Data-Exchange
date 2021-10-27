@@ -33,7 +33,7 @@ def store_timestamp_data(thread_name):
     global elapsed_time_data
     db.write_points(elapsed_time_data, database='aux_master_db', time_precision='ms', batch_size=5000,
                     protocol="line")
-    
+
 
 
 def generate_data(thread_name):

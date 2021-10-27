@@ -145,3 +145,4 @@ if __name__ == "__main__":
     # db.drop_database('master_db')
     # mqtt_terminate(master)
     input("Press the <ENTER> key to continue...")
+

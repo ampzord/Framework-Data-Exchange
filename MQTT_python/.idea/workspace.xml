@@ -3,11 +3,15 @@
   <component name="ChangeListManager">
     <list default="true" id="e8c2bfd9-37be-4fc3-8845-b11f781ad1f7" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+<<<<<<< HEAD
       <change beforePath="$PROJECT_DIR$/client.py" beforeDir="false" afterPath="$PROJECT_DIR$/client.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/master.py" beforeDir="false" afterPath="$PROJECT_DIR$/master.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../TODOList.TODO" beforeDir="false" afterPath="$PROJECT_DIR$/../TODOList.TODO" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../clients.bat" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/../master_10clients.bat" beforeDir="false" afterPath="$PROJECT_DIR$/../master_10clients.bat" afterDir="false" />
+=======
+      <change beforePath="$PROJECT_DIR$/master.py" beforeDir="false" afterPath="$PROJECT_DIR$/master.py" afterDir="false" />
+>>>>>>> 4892700c74b409892344b65079a0ad7fd76fb612
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -29,7 +33,7 @@
     <property name="last_opened_file_path" value="$PROJECT_DIR$/client.py" />
     <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
   </component>
-  <component name="RunManager" selected="Python.client">
+  <component name="RunManager" selected="Python.master">
     <configuration name="client" type="PythonConfigurationType" factoryName="Python">
       <module name="MQTT_python" />
       <option name="INTERPRETER_OPTIONS" value="" />
