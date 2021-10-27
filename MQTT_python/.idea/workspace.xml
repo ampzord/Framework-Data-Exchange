@@ -2,9 +2,12 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="e8c2bfd9-37be-4fc3-8845-b11f781ad1f7" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/MQTT_python.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/MQTT_python.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client.py" beforeDir="false" afterPath="$PROJECT_DIR$/client.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/master.py" beforeDir="false" afterPath="$PROJECT_DIR$/master.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../TODOList.TODO" beforeDir="false" afterPath="$PROJECT_DIR$/../TODOList.TODO" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../clients.bat" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../master_10clients.bat" beforeDir="false" afterPath="$PROJECT_DIR$/../master_10clients.bat" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -70,8 +73,8 @@
       <method v="2" />
     </configuration>
     <list>
-      <item itemvalue="Python.master" />
       <item itemvalue="Python.client" />
+      <item itemvalue="Python.master" />
     </list>
   </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />

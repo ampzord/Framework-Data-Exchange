@@ -47,7 +47,7 @@ def on_message(client, userdata, message):
             global ALL_DATA_RECEIVED
             ALL_DATA_RECEIVED = True
             req_end_time = time.perf_counter()
-            print("Simulation took: {time}s".format(time=req_end_time - req_start_time))
+            print("Simulation took: {time} seconds".format(time=req_end_time - req_start_time))
 
         try:
             client_name = message.topic.split('/')
@@ -67,6 +67,18 @@ def mqtt_init(tmp_master):
     tmp_master.connect(broker_address, port=1883)  # connect to broker
 
 
+def clear_data(master_db):
+    """
+    Clears every value from client's DB.
+    """
+    db.switch_database('master_db')
+    query = "DROP SERIES FROM weldingEvents;"
+    remove_data = master_db.query(query)
+    # print("Data before deleting: ", remove_data)
+    data = db.query("SELECT * FROM weldingEvents;")
+    # print('Data After deletion: ', data.raw)
+
+
 def mqtt_terminate(tmp_master):
     """
     Stops MQTT loop and disconnects client
@@ -81,7 +93,7 @@ def get_db_data():
     Queries master's DB to print the total number of
     welding_value that reached master's DB from its clients.
     """
-
+    db.switch_database('master_db')
     data = db.query("SELECT * FROM weldingEvents;")
     # print("data: ", data)
     points = data.get_points(tags={'measurement': 'weldingEvents'})
@@ -109,10 +121,16 @@ if __name__ == "__main__":
     # InfluxDB
     db = InfluxDBClient('localhost', 8086, 'root', 'root', 'master_db')
     db.create_database('master_db')
+    db.create_database('aux_master_db')
 
+
+    clear_data(db)
     # Broker
     master = mqtt.Client("master")
     mqtt_init(master)
+
+    # dbs = db.get_list_database()
+    # print('List of DBs: ', dbs)
 
     req_start_time = time.perf_counter()
     master.publish("topic/simulation/master", "GET_INFORMATION")
@@ -121,6 +139,9 @@ if __name__ == "__main__":
     while not ALL_DATA_RECEIVED:
         pass
 
+    get_db_data()
+
     # Terminate connection
-    db.drop_database('master_db')
-    mqtt_terminate()
+    # db.drop_database('master_db')
+    # mqtt_terminate(master)
+    input("Press the <ENTER> key to continue...")

@@ -1,1 +1,1 @@
-start py.exe "C:\Users\work\Documents\FEUP\MQTT_Project\master.py" 10
+start py.exe "C:\Users\work\Documents\FEUP\MQTT_Project\MQTT_python\master.py" 10

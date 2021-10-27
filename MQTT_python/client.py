@@ -3,20 +3,55 @@ from influxdb import InfluxDBClient
 import random
 import time
 import sys
+import logging
+import threading
+from time import sleep
+from threading import Thread, Lock
+import concurrent.futures
+from concurrent.futures import ThreadPoolExecutor
+
+elapsed_time_data = []
+
+def save_timestamps_db():
+    measurement_name = "thread_timestamp_events"
+    average_time = None
+    thread_iteration = None
+    for i in range(10000):
+        elapsed_time_data.append("{measurement},client={client} average_time={average_time},thread_iteration={"
+                                 "thread_iteration} "
+                                 .format(measurement=measurement_name,
+                                         client=client_id,
+                                         average_time=average_time,
+                                         thread_iteration=thread_iteration))
 
 
-def generate_data():
+def store_timestamp_data(thread_name):
+    """
+    Writes the saved timestamp data to aux_master_db
+    """
+    # TODO
+    global elapsed_time_data
+    db.write_points(elapsed_time_data, database='aux_master_db', time_precision='ms', batch_size=5000,
+                    protocol="line")
+    
+
+
+def generate_data(thread_name):
     """
     Generates the welding values with its assigned timestamps to be inserted in the DB.
     """
-
+    global GLOBAL_DATA, GLOBAL_THREAD_START_TIME, GLOBAL_THREAD_END_TIME
+    # GLOBAL_THREAD_START_TIME = time.thread_time()
+    thread_start_time = time.thread_time()
+    logging.info("Thread %s: starting", thread_name)
     measurement_name = "weldingEvents"
-    number_of_points = 20000
-    data = []
+    number_of_points = 1000
+    # data = []
     curr_time = tmp_time
     for i in range(number_of_points):
         welding_value = format(round(random.uniform(0, 30), 4))
-        curr_time = curr_time - random.randint(1,1000000)  # curr_time = int(time.time() * 1000), int(time.time() * 1000000000)
+        curr_time = curr_time - random.randint(1,
+                                               1000000)  # curr_time = int(time.time() * 1000), int(time.time() * 1000000000)
 
         # uniqueID = 'uniqueID' + str(i + 1)
         # data.append("{measurement},client={client},uniqueID={uniqueID} welding_value={welding_value} {timestamp}"
@@ -25,25 +60,60 @@ def generate_data():
         #                    uniqueID=uniqueID,
         #                    welding_value=welding_value,
         #                    timestamp=curr_time))
-        data.append("{measurement},client={client} welding_value={welding_value} {timestamp}"
-                    .format(measurement=measurement_name,
-                            client=client_id,
-                            welding_value=welding_value,
-                            timestamp=curr_time))
-    return data
+        GLOBAL_DATA.append("{measurement},client={client} welding_value={welding_value} {timestamp}"
+                           .format(measurement=measurement_name,
+                                   client=client_id,
+                                   welding_value=welding_value,
+                                   timestamp=curr_time))
+
+        # GLOBAL_DATA.append("{measurement},client={client} welding_value={welding_value}"
+        #                   .format(measurement=measurement_name,
+        #                           client=client_id,
+        #                           welding_value=welding_value))
+    # return data
+    # GLOBAL_THREAD_END_TIME = time.thread_time()
+    thread_end_time = time.thread_time()
+    print("The time spent is {}".format(thread_end_time - thread_start_time))
 
 
-def store_data(data):
+def store_data(thread_name):
     """
-    Writes the generated information to the DB.
+    Writes the generated information to the client's DB.
     """
+
+    logging.info("Thread %s: starting", thread_name)
+    global GLOBAL_DATA
 
     client_write_start_time = time.perf_counter()
-    db.write_points(data, database=client_db_name, time_precision='ms', batch_size=10000,
+    db.write_points(GLOBAL_DATA, database=client_db_name, time_precision='ms', batch_size=5000,
                     protocol="line")  # previous time_precision='n'
     client_write_end_time = time.perf_counter()
     print(client_id + " wrote ALL generated Data to Client DB in: {time}s".format(
         time=client_write_end_time - client_write_start_time))
+    GLOBAL_DATA.clear()
+
+
+def machine_workflow(thread_name):
+    logging.info("Thread %s: starting", thread_name)
+    global GLOBAL_MACHINE_WORKFLOW_CYCLE, GLOBAL_DATA, GLOBAL_ITERATOR_GENERATE_DATA, GLOBAL_THREAD_START_TIME, \
+        GLOBAL_THREAD_END_TIME
+
+    while GLOBAL_MACHINE_WORKFLOW_CYCLE:
+
+        # TODO run generating_data thread for X cycles and after save to clientDB
+
+        generate_data_thread = threading.Thread(target=generate_data, args=("Generate Data Thread",))
+        generate_data_thread.start()
+        # generate_data_thread.join()
+        # print("The time spent is {}".format(GLOBAL_THREAD_END_TIME - GLOBAL_THREAD_START_TIME))
+
+        GLOBAL_ITERATOR_GENERATE_DATA += 1
+
+        if GLOBAL_ITERATOR_GENERATE_DATA >= 10:
+            store_data_thread = threading.Thread(target=store_data, args=("Store Data Thread",))
+            store_data_thread.start()
+            GLOBAL_ITERATOR_GENERATE_DATA = 0
+            store_data_thread.join()
 
 
 def has_duplicate(tmp_list):
@@ -82,13 +152,22 @@ def get_db_data():
         print('No duplicate timestamp found in client\'s database.\n')
 
 
-def send_client_data():
+def send_client_data(thread_name):
     """
     Send client's DB to master's DB
     """
+
+    logging.info("Thread %s: starting", thread_name)
     db.switch_database(client_db_name)
+    # global DB_LOCK
+    # DB_LOCK.acquire()
     client_write_start_time = time.perf_counter()
+    # machine_workflow_thread.do_run = False
+    # print("Hello before select")
     send_data = db.query('SELECT * INTO master_db..weldingEvents FROM weldingEvents GROUP BY *;')
+    # print("Hello after select")
+
+    # machine_workflow_thread.do_run = True
     # bind_params={"$client_db_name": client_db_name}
     # )
 
@@ -104,13 +183,13 @@ def send_client_data():
     '''
 
     client_write_end_time = time.perf_counter()
+    # DB_LOCK.release()
     print(client_id + " sent ALL Data to Master\'s DB in: {time}s".format(
         time=client_write_end_time - client_write_start_time))
     print("Query Successful: ", send_data)
     client.publish(topic_name, "ALL_INFORMATION_SENT")
     global CLIENT_SENT_ALL_DATA
     CLIENT_SENT_ALL_DATA = True
-
     '''
      remove_data = db.query(
          query='DROP SERIES FROM weldingEvents WHERE client=$client;',
@@ -183,6 +262,11 @@ def mqtt_init(tmp_client):
 
 
 if __name__ == "__main__":
+    GLOBAL_ITERATOR_GENERATE_DATA = 0
+    GLOBAL_THREAD_START_TIME = None
+    GLOBAL_THREAD_END_TIME = None
+    GLOBAL_MACHINE_WORKFLOW_CYCLE = True
+    GLOBAL_DATA = []
     CLIENT_SENT_ALL_DATA = False
     MASTER_REQ_INFO = False
     machine_number = (sys.argv[1])
@@ -190,13 +274,23 @@ if __name__ == "__main__":
     client_id = 'client' + machine_number  # client1
     topic_name = "topic/simulation/clients/" + client_id
 
-    db = InfluxDBClient('192.168.1.8', 8086, 'root', 'root', client_db_name)  # localhost
+    # home_pc = '192.168.1.14'
+    db = InfluxDBClient('localhost', 8086, 'root', 'root', client_db_name)  # localhost
     db.create_database(client_db_name)
+
+
+    clear_data(db)
 
     tmp_time = int(time.time() * 1000)  # milliseconds
 
-    machine_data = generate_data()
-    store_data(machine_data)
+    # Threads
+
+    # Threads init
+    thread_format = "%(asctime)s: %(message)s"
+    logging.basicConfig(format=thread_format, level=logging.INFO, datefmt="%H:%M:%S")
+
+    machine_workflow_thread = threading.Thread(target=machine_workflow, args=("Machine Workflow Thread",))
+    machine_workflow_thread.start()
 
     client = mqtt.Client()
     mqtt_init(client)
@@ -206,18 +300,24 @@ if __name__ == "__main__":
         pass
 
     client.publish(topic_name, "SENDING_DATA")
-    get_db_data()  # used to confirm if data is valid (no repeated timestamps)
-    send_client_data()
+    # get_db_data()  # used to confirm if data is valid (no repeated timestamps)
+
+    send_data_thread = threading.Thread(target=send_client_data, args=("Send Data Thread",))
+    send_data_thread.start()
+
+    # send_data_thread.join()
+
+    # send_client_data("Send Data Thread")
 
     while not CLIENT_SENT_ALL_DATA:
         pass
 
-    clear_data(db)
-    db.drop_database(client_db_name)
-    client.loop_stop()
-    client.disconnect()
+    # clear_data(db)
+    # db.drop_database(client_db_name)
+    # client.loop_stop()
+    # client.disconnect()
+    GLOBAL_MACHINE_WORKFLOW_CYCLE = False
     input("Press the <ENTER> key to continue...")
 
     # dbs = db.get_list_database()
     # print('List of DBs: ', dbs)
-
