@@ -10,37 +10,38 @@ from threading import Thread, Lock
 import concurrent.futures
 from concurrent.futures import ThreadPoolExecutor
 
-elapsed_time_data = []
+ELAPSED_TIME_DATA = []
+GEN_THREAD_TIME_DATA = []
+GEN_THREAD_ITERATION_DATA = []
+GEN_THREAD_ITERATION_AUX = 1
 
-def save_timestamps_db():
+
+def save_thread_time():
     measurement_name = "thread_timestamp_events"
-    average_time = None
-    thread_iteration = None
-    for i in range(10000):
-        elapsed_time_data.append("{measurement},client={client} average_time={average_time},thread_iteration={"
-                                 "thread_iteration} "
+    global GEN_THREAD_TIME_DATA, GEN_THREAD_ITERATION_DATA
+    for i in range(len(GEN_THREAD_ITERATION_DATA)):
+        ELAPSED_TIME_DATA.append("{measurement},client={client} thread_time={thread_time},thread_iteration={thread_iteration}i"
                                  .format(measurement=measurement_name,
                                          client=client_id,
-                                         average_time=average_time,
-                                         thread_iteration=thread_iteration))
+                                         thread_time=GEN_THREAD_TIME_DATA[i],
+                                         thread_iteration=GEN_THREAD_ITERATION_DATA[i]))
 
 
-def store_timestamp_data(thread_name):
+def store_thread_time():
     """
     Writes the saved timestamp data to aux_master_db
     """
-    # TODO
-    global elapsed_time_data
-    db.write_points(elapsed_time_data, database='aux_master_db', time_precision='ms', batch_size=5000,
-                    protocol="line")
 
+    global ELAPSED_TIME_DATA
+    db.write_points(ELAPSED_TIME_DATA, database='aux_master_db', time_precision='n', batch_size=5000,
+                    protocol="line")
 
 
 def generate_data(thread_name):
     """
     Generates the welding values with its assigned timestamps to be inserted in the DB.
     """
-    global GLOBAL_DATA, GLOBAL_THREAD_START_TIME, GLOBAL_THREAD_END_TIME
+    global GLOBAL_DATA, GLOBAL_THREAD_START_TIME, GLOBAL_THREAD_END_TIME, GEN_THREAD_TIME_DATA, GEN_THREAD_ITERATION_AUX
     # GLOBAL_THREAD_START_TIME = time.thread_time()
     thread_start_time = time.thread_time()
     logging.info("Thread %s: starting", thread_name)
@@ -73,7 +74,14 @@ def generate_data(thread_name):
     # return data
     # GLOBAL_THREAD_END_TIME = time.thread_time()
     thread_end_time = time.thread_time()
-    print("The time spent is {}".format(thread_end_time - thread_start_time))
+    GEN_THREAD_TIME_DATA.append(thread_end_time - thread_start_time) #thread_time
+    GEN_THREAD_ITERATION_DATA.append(GEN_THREAD_ITERATION_AUX) #thread_iterator number
+    GEN_THREAD_ITERATION_AUX += 1
+    print(GEN_THREAD_TIME_DATA)
+    print("GEN_THREAD_TIME_DATA: ", GEN_THREAD_TIME_DATA)
+    print("GEN_THREAD_ITERATION_DATA: ", GEN_THREAD_ITERATION_DATA)
+    print("GEN_THREAD_ITERATION_AUX: ", GEN_THREAD_ITERATION_AUX)
+    # print("The time spent is {}".format(thread_end_time - thread_start_time))
 
 
 def store_data(thread_name):
@@ -311,6 +319,9 @@ if __name__ == "__main__":
 
     while not CLIENT_SENT_ALL_DATA:
         pass
+
+    save_thread_time()
+    store_thread_time()
 
     # clear_data(db)
     # db.drop_database(client_db_name)

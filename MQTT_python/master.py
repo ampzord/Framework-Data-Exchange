@@ -69,7 +69,7 @@ def mqtt_init(tmp_master):
 
 def clear_data(master_db):
     """
-    Clears every value from client's DB.
+    Clears every value from MasterDB.
     """
     db.switch_database('master_db')
     query = "DROP SERIES FROM weldingEvents;"
@@ -77,6 +77,15 @@ def clear_data(master_db):
     # print("Data before deleting: ", remove_data)
     data = db.query("SELECT * FROM weldingEvents;")
     # print('Data After deletion: ', data.raw)
+
+
+def clear_data_aux(aux_master_db):
+    """
+    Clears every value from Master's auxiliary DB.
+    """
+    db.switch_database('aux_master_db')
+    query = "DROP SERIES FROM thread_timestamp_events;"
+    remove_data = aux_master_db.query(query)
 
 
 def mqtt_terminate(tmp_master):
@@ -109,6 +118,17 @@ def get_db_data():
         print("Error counting number of total welding values reached Master DB.")
 
 
+def check_thread_data():
+
+    db.switch_database('aux_master_db')
+    data = db.query("SELECT * FROM thread_timestamp_events;")
+    # print("AUX MASTER data: ", data)
+    points = data.get_points(tags={'measurement': 'thread_timestamp_events'})
+    print("AUX Master DB: \n", data.raw)
+    # for point in points:
+    # print("Time: {}, Welding value: {}".format(point['time'], point['welding_value']))
+
+
 if __name__ == "__main__":
 
     # Arguments
@@ -123,8 +143,8 @@ if __name__ == "__main__":
     db.create_database('master_db')
     db.create_database('aux_master_db')
 
-
     clear_data(db)
+    clear_data_aux(db)
     # Broker
     master = mqtt.Client("master")
     mqtt_init(master)
@@ -140,6 +160,7 @@ if __name__ == "__main__":
         pass
 
     get_db_data()
+    check_thread_data()
 
     # Terminate connection
     # db.drop_database('master_db')
