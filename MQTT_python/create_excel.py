@@ -36,7 +36,7 @@ if __name__ == "__main__":
         header3 = ["NUMBER_OF_CLIENTS", "NUMBER_ITERATIONS_TILL_WRITE", "NUMBER_GENERATED_POINTS_PER_CYCLE", "TIME_TILL_REQUEST_OF_INFORMATION", "Average", "Std_Deviation", "Average", "Std_Deviation", "Average", "Std_Deviation",
                    "Average", "Std_Deviation", "Average", "Std_Deviation", "Average", "Std_Deviation", "Average", "Std_Deviation", "Average", "Std_Deviation", "Average", "Std_Deviation", "Average", "Std_Deviation", "Average", "Std_Deviation",
                    "Average", "Std_Deviation", "Average", "Std_Deviation", "Average", "Std_Deviation", "Average", "Std_Deviation", "Average", "Std_Deviation", "Average", "Std_Deviation", "Average", "Std_Deviation", "Average", "Std_Deviation",
-                   "Average", "Std_Deviation"]
+                   "Average", "Std_Deviation","Average", "Std_Deviation","Average", "Std_Deviation","Average", "Std_Deviation","Average", "Std_Deviation"]
         writer.writerow(header1)
         writer.writerow(header2)
         writer.writerow(header3)
@@ -122,10 +122,10 @@ if __name__ == "__main__":
                     CLIENT_SOLUTION_LIST.append(time_elapsed_value_std_decimal)
 
             # INFORMATION TO SEND TO .CSV
-            parameters_divided = dir.split('_')  # PARAMETERS
-            print(parameters_divided)
+            # parameters_divided = dir.split('_')  # PARAMETERS
+            # print(parameters_divided)
             print(MASTER_SOLUTION_LIST)
-            SOLUTION_ROW_LIST = parameters_divided + MASTER_SOLUTION_LIST + CLIENT_SOLUTION_LIST
+            SOLUTION_ROW_LIST = dir + "", "", "" + MASTER_SOLUTION_LIST + CLIENT_SOLUTION_LIST
 
             with open('solution.csv', 'a', encoding='UTF8', newline='') as f_csv:
                 writer = csv.writer(f_csv)
