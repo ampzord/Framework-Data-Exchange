@@ -12,6 +12,7 @@ The communication between Master and its Clients is done through MQTT Protocol w
 # Standard Library
 import time
 import sys
+import os
 
 # 3rd Party Packages
 import paho.mqtt.client as mqtt
@@ -24,6 +25,7 @@ __author__ = "António Pereira"
 __email__ = "antonio_m_sp@hotmail.com"
 __status__ = "Development"
 
+
 # ----------------------------------------
 
 
@@ -31,7 +33,7 @@ def on_connect(client, userdata, flags, rc):
     """
     MQTT connect protocol
 
-    RC:
+    Error Code, RC:
     0: Connection successful
     1: Connection refused – incorrect protocol version
     2: Connection refused – invalid client identifier
@@ -42,11 +44,11 @@ def on_connect(client, userdata, flags, rc):
     """
 
     if rc != 0:
-        print("Master - Error connecting to Broker. Return Code: ", rc)
+        logging.info("Master - Error connecting to Broker. Return Code: ", rc)
+        client.reconnect()
     else:
-        print("Master - Successfully connected to Broker.")
-        print("Master - Subscribing to every Client topic.\n")
-        client.subscribe("topic/simulation/clients/#")
+        logging.info("Master - Successfully connected to Broker.")
+        client.subscribe("topic/simulation/clients/#", qos=1)
 
 
 def on_message(client, userdata, message):
@@ -55,29 +57,31 @@ def on_message(client, userdata, message):
     """
 
     decoded_message = str(message.payload.decode("utf-8"))
-    DEBUG = True
-    if DEBUG:
-        print("message received: ", decoded_message)
-        print("message topic: ", message.topic)
-        print("message qos: ", message.qos)  # 0, 1 or 2.
-        print("message retain flag: ", message.retain, "\n")
+
+    if decoded_message == "WORKING":
+        pass
+    else:
+        mqtt_protocol_print(message)
 
     if decoded_message == "ALL_INFORMATION_SENT":
-        global RECEIVED_DATA_FROM_CLIENT_COUNT
-        RECEIVED_DATA_FROM_CLIENT_COUNT += 1
+        global RECEIVED_ALL_DATA_FROM_CLIENT_TOTAL
+        RECEIVED_ALL_DATA_FROM_CLIENT_TOTAL += 1
 
-        if RECEIVED_DATA_FROM_CLIENT_COUNT == int(client_size):
+        if RECEIVED_ALL_DATA_FROM_CLIENT_TOTAL == int(CLIENT_SIZE):
             global ALL_DATA_RECEIVED
             ALL_DATA_RECEIVED = True
+
             req_end_time = time.perf_counter()
-            print("Simulation took: {time} seconds since Master did it's Request\n".format(time=req_end_time - req_start_time))
-            client.publish("topic/simulation/master", "REQ_DONE")
+            master_req_time = req_end_time - req_start_time
+
+            logging.info("Since Master did Request till all data arrived it took: {%.5f} seconds\n", master_req_time)
+            client.publish(MASTER_TOPIC_NAME, "REQUEST_FINISHED", qos=0, retain=False)
 
         try:
             client_name = message.topic.split('/')
-            client.publish("topic/simulation/master", "DATA_RECEIVED_FROM_" + client_name[3])
+            client.publish(MASTER_TOPIC_NAME, "DATA_RECEIVED_FROM_" + client_name[3])
         except ValueError:
-            print("Error splitting topic string in " + client_name[3])
+            logging.info("Error splitting topic string in " + client_name[3])
 
 
 def mqtt_init(tmp_master):
@@ -85,31 +89,32 @@ def mqtt_init(tmp_master):
     Connects to Broker and initializes protocols
     """
 
+    # broker_address = "broker.hivemq.com"
+    broker_address = "localhost"
+    broker_port = 1883
+
     tmp_master.on_connect = on_connect
     tmp_master.on_message = on_message
-    broker_address = "broker.hivemq.com"  # broker_address = "localhost"
-    tmp_master.connect(broker_address, port=1883)  # connect to broker
+
+    try:
+        tmp_master.connect(broker_address, port=broker_port)
+    except ConnectionError:
+        logging.info("Error connecting to Broker: %s, on Port: %s" % (broker_address, broker_port))
+        tmp_master.reconnect()
 
 
-def clear_data(master_db):
+def clear_masterDB_data():
     """
     Clears every value from MasterDB.
     """
-    db.switch_database('master_db')
+
+    db.switch_database(MASTER_DB_NAME)
+    # db.drop_database(MASTER_DB_NAME)
+
     query = "DROP SERIES FROM weldingEvents;"
-    remove_data = master_db.query(query)
-    # print("Data before deleting: ", remove_data)
-    data = db.query("SELECT * FROM weldingEvents;")
-    # print('Data After deletion: ', data.raw)
-
-
-def clear_data_aux(aux_master_db):
-    """
-    Clears every value from Master's auxiliary DB.
-    """
-    db.switch_database('aux_master_db')
-    query = "DROP SERIES FROM thread_timestamp_events;"
-    remove_data = aux_master_db.query(query)
+    logging.debug("Cleaning Master DB...")
+    db.query(query)
+    logging.debug("Finished cleaning DB...")
 
 
 def mqtt_terminate(tmp_master):
@@ -121,75 +126,76 @@ def mqtt_terminate(tmp_master):
     tmp_master.disconnect()
 
 
-def get_db_data():
+def get_masterDB_data():
     """
     Queries master's DB to print the total number of
     welding_value that reached master's DB from its clients.
     """
-    db.switch_database('master_db')
-    data = db.query("SELECT * FROM weldingEvents;")
-    # print("data: ", data)
-    points = data.get_points(tags={'measurement': 'weldingEvents'})
-    # print("Master DB: \n", data.raw)
-    # for point in points:
-    # print("Time: {}, Welding value: {}".format(point['time'], point['welding_value']))
+
+    db.switch_database(MASTER_DB_NAME)
 
     try:
         new_data = db.query("SELECT count(welding_value) FROM weldingEvents;")
         all_events = list(new_data.get_points(measurement='weldingEvents'))
-        print('Total Welding value count: ', all_events[0]['count'])
-    except "CountError":
-        print("Error counting number of total welding values reached Master DB.")
+        logging.info('Number of Welding Values in MasterDB: {' + str(all_events[0]['count']) + '}')
+    except ValueError:
+        logging.info("Error counting number of total welding values reached Master DB.")
 
 
-def check_thread_data():
+def init_logging_config():
+    logging.root.handlers = []
 
-    db.switch_database('aux_master_db')
-    data = db.query("SELECT * FROM thread_timestamp_events;")
-    # print("AUX MASTER data: ", data)
-    points = data.get_points(tags={'measurement': 'thread_timestamp_events'})
-    print("AUX Master DB: \n", data.raw)
-    # for point in points:
-    # print("Time: {}, Welding value: {}".format(point['time'], point['welding_value']))
+    if 'DEBUG_MODE' in sys.argv:
+        logging.basicConfig(filename=SOLUTION_PATH + '\\' + 'master.log', format='%(asctime)s : %(levelname)s : %(message)s',
+                            level=logging.DEBUG, filemode='a')
+    else:
+        logging.basicConfig(filename=SOLUTION_PATH + '\\' + 'master.log', format='%(asctime)s : %(levelname)s : %(message)s',
+                            level=logging.INFO, filemode='a')
+
+    # logging.basicConfig(format=thread_format, level=logging.INFO, datefmt="%H:%M:%S")
+
+    # set up logging to console
+    console = logging.StreamHandler()
+    console.setLevel(logging.INFO)
+
+    # set a format which is simpler for console use
+    formatter = logging.Formatter('%(asctime)s : %(levelname)s : %(message)s')
+    console.setFormatter(formatter)
+    logging.getLogger("").addHandler(console)
 
 
 if __name__ == "__main__":
 
     # Arguments
-    client_size = sys.argv[1]
+    CLIENT_SIZE = sys.argv[1]
+    SOLUTION_PATH = sys.argv[2]
 
     # Global Variables
     ALL_DATA_RECEIVED = False
-    RECEIVED_DATA_FROM_CLIENT_COUNT = 0
+    RECEIVED_ALL_DATA_FROM_CLIENT_TOTAL = 0
+    MASTER_DB_NAME = 'master_db'
+    MASTER_TOPIC_NAME = 'topic/simulation/master'
 
     # InfluxDB
-    db = InfluxDBClient('localhost', 8086, 'root', 'root', 'master_db')
-    db.create_database('master_db')
-    # db.create_database('aux_master_db')
+    db = InfluxDBClient('localhost', 8086, 'root', 'root', MASTER_DB_NAME)
+    db.create_database(MASTER_DB_NAME)
+    # clear_masterDB_data()
 
-    clear_data(db)
-    # clear_data_aux(db)
+    # Logging Configuration
+    init_logging_config()
+
     # Broker
-    master = mqtt.Client("master")
+    master = mqtt.Client()
     mqtt_init(master)
 
-    # dbs = db.get_list_database()
-    # print('List of DBs: ', dbs)
-
     req_start_time = time.perf_counter()
-    master.publish("topic/simulation/master", "GET_INFORMATION")
+    master.publish(MASTER_TOPIC_NAME, "GET_INFORMATION", qos=0, retain=False)
+
     master.loop_start()
 
     while not ALL_DATA_RECEIVED:
         pass
 
-    get_db_data()
-    # print("RECEIVED ALL DATA, STOPPING.\n\n")
+    get_masterDB_data()
+    mqtt_terminate(master)
     quit()
-    # check_thread_data()
-
-    # Terminate connection
-    # db.drop_database('master_db')
-    # mqtt_terminate(master)
-    # input("Press the <ENTER> key to continue...")
-

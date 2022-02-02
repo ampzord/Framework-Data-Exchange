@@ -13,8 +13,9 @@ The communication is done through the MQTT Protocol with InfluxDB.
 import random
 import time
 import sys
-import logging
 import threading
+import os
+from datetime import datetime
 
 # 3rd Party Packages
 import paho.mqtt.client as mqtt
@@ -32,159 +33,154 @@ __status__ = "Development"
 
 # Global Variables
 
-ELAPSED_TIME_DATA = []
-GEN_THREAD_TIME_DATA = []
-GEN_THREAD_ITERATION_DATA = []
-GEN_THREAD_ITERATION_AUX = 1
-GEN_THREAD_REQUEST = []
+WELDING_GEN_THREAD_TIMESTAMP = None  # added later
 
-iter = 0
+GEN_THREAD_TIME_DATA = []  # time taken by thread
+GEN_THREAD_ITERATION_DATA = []  # thread iterator
+GEN_THREAD_REQUEST = []  # IDLE / REQUEST
+
+GEN_THREAD_ITERATION_AUX = 1
+
+
+# -------------
+
+itera = 0
 prev_ts = 0
+
+# Util function
 
 
 def now() -> int:
-    global iter, prev_ts
+    global itera, prev_ts
     ts = time.time_ns()
     if ts == prev_ts:
-        iter += 1
+        itera += 1
     else:
-        iter = 0
+        itera = 0
         prev_ts = ts
-    return ts + iter
+    return ts + itera
 
 
-def save_thread_time():
-    measurement_name = "thread_timestamp_events"
-    global GEN_THREAD_TIME_DATA, GEN_THREAD_ITERATION_DATA
-    for i in range(len(GEN_THREAD_ITERATION_DATA)):
-        ELAPSED_TIME_DATA.append(
-            "{measurement},client={client} thread_time={thread_time},thread_iteration={thread_iteration}i"
-                .format(measurement=measurement_name,
-                        client=CLIENT_ID,
-                        thread_time=GEN_THREAD_TIME_DATA[i],
-                        thread_iteration=GEN_THREAD_ITERATION_DATA[i]))
+def mathematical_calculation():
+    k = 1 # Initialize denominator
+    s = 0 # Initialize sum
+
+    for i in range(1000000):
+        # even index elements are positive
+        if i % 2 == 0:
+            s += 4 / k
+        else:
+            # odd index elements are negative
+            s -= 4 / k
+
+        # denominator is odd
+        k += 2
+    return s
+    # print(s)
+
+# ---------
 
 
-def store_thread_time():
+def save_thread_timestamp_intervals_csv():
     """
-    Writes the saved timestamp data to aux_master_db
+    Writes the saved elapsed timestamp from generating_data() thread to clientID.csv
     """
 
-    global ELAPSED_TIME_DATA
-    # db.write_points(ELAPSED_TIME_DATA, database='aux_master_db', time_precision='n', batch_size=5000,
-    #                protocol="line")
+    tmp_dict = {'Thread_Iteration': GEN_THREAD_ITERATION_DATA,
+                'Time_Elapsed': GEN_THREAD_TIME_DATA,
+                'MASTER_REQUEST': GEN_THREAD_REQUEST}
 
-    # SAVE TO .CSV FILE
-
-    # GEN_THREAD_TIME_DATA
-    # GEN_THREAD_ITERATION_DATA
-    # print("GEN_THREAD_TIME_DATA: ", GEN_THREAD_TIME_DATA)
-    # print("GEN_THREAD_ITERATION_DATA: ", GEN_THREAD_ITERATION_DATA)
-    dict = {'Thread_Iteration': GEN_THREAD_ITERATION_DATA, 'Time_Elapsed': GEN_THREAD_TIME_DATA,
-            'MASTER_REQUEST': GEN_THREAD_REQUEST}
-    df = pd.DataFrame(dict)
-
-    df.to_csv(CLIENT_ID + '_thread_time_elapsed.csv')
+    df = pd.DataFrame(tmp_dict)
+    sum_timestamps = sum(GEN_THREAD_TIME_DATA) * pow(10, -9)
+    logging.info(CLIENT_ID + " - Solution time adding all time_elapsed of thread: {%.5f} seconds", sum_timestamps)
+    timestr = time.strftime("%Y%m%d-%H%M%S")
+    df.to_csv(SOLUTION_PATH + '\\' + CLIENT_ID + '_thread_time_elapsed_' + timestr + '.csv', index=False)
 
 
-def generate_data(thread_name):
+def welding_data_generation_simulation():
     """
     Generates the welding values with its assigned timestamps to be inserted in the DB.
     """
-    global GLOBAL_DATA, GLOBAL_THREAD_START_TIME, GLOBAL_THREAD_END_TIME, GEN_THREAD_TIME_DATA, GEN_THREAD_ITERATION_AUX, GEN_THREAD_REQUEST
-    # GLOBAL_THREAD_START_TIME = time.thread_time()
     thread_start_time = time.thread_time_ns()
-    # logging.info("%s: Starting", thread_name)
+    logging.debug("Welding Simulator Working...")
+    global WELDING_DATA, GEN_THREAD_TIME_DATA, GEN_THREAD_ITERATION_AUX, GEN_THREAD_REQUEST
     measurement_name = "weldingEvents"
-    number_of_points = NUMBER_POINTS_PER_CYCLE
-    curr_time = tmp_time
-    for i in range(number_of_points):
-        welding_value = format(round(random.uniform(0, 30), 4))
-        GLOBAL_DATA.append("{measurement},client={client} welding_value={welding_value} {timestamp}"
-                           .format(measurement=measurement_name,
-                                   client=CLIENT_ID,
-                                   welding_value=welding_value,
-                                   timestamp=now()))
 
-    # GLOBAL_THREAD_END_TIME = time.thread_time()
+    for i in range(NUMBER_GENERATED_POINTS_PER_CYCLE):
+        # start_time = time.time()
+        # logging.info("BEFORE: " + str(start_time))
+        # mathematical_calculation()
+        # logging.info("TIME TAKEN BY MATHEMATICAL CALCULATION: " + str(time.time() - start_time))
+        welding_value = format(round(random.uniform(0, 30), 4))
+        uniqueID = str(i+1)
+        # time.clock_gettime_ns(time.CLOCK_REALTIME))
+        # time_now_temp = int(time.time() * 1000)
+        time_now_temp = time.time_ns()
+        WELDING_DATA.append("{measurement},client={client},uniqueID={uniqueID} welding_value={welding_value} {timestamp}"
+                            .format(measurement=measurement_name,
+                                    client=CLIENT_ID,
+                                    uniqueID=uniqueID,
+                                    welding_value=welding_value,
+                                    timestamp=time_now_temp))
+
     thread_end_time = time.thread_time_ns()
     GEN_THREAD_TIME_DATA.append(thread_end_time - thread_start_time)  # thread_time
     GEN_THREAD_ITERATION_DATA.append(GEN_THREAD_ITERATION_AUX)  # thread_iterator number
+
     if MASTER_REQ_INFO:
         GEN_THREAD_REQUEST.append("REQUEST")
     else:
         GEN_THREAD_REQUEST.append("IDLE")
     GEN_THREAD_ITERATION_AUX += 1
-    # print(GEN_THREAD_TIME_DATA)
-    # print("GEN_THREAD_TIME_DATA: ", GEN_THREAD_TIME_DATA)
-    # print("GEN_THREAD_ITERATION_DATA: ", GEN_THREAD_ITERATION_DATA)
-    # print("GEN_THREAD_ITERATION_AUX: ", GEN_THREAD_ITERATION_AUX)
-    # print("The time spent is {}".format(thread_end_time - thread_start_time))
 
 
-def store_data(thread_name):
+def store_welding_generation_DB():
     """
     Writes the generated information to the client's DB.
     """
 
-    logging.info("%s: Starting", thread_name)
-    global GLOBAL_DATA
+    global WELDING_DATA
+    logging.debug("Storing generated welding data to DB...")
 
     client_write_start_time = time.perf_counter()
-    db.write_points(GLOBAL_DATA, database=CLIENT_DB_NAME, time_precision='n', batch_size=5000,
-                    protocol="line")
+    db.write_points(WELDING_DATA, database=CLIENT_DB_NAME, time_precision='n', batch_size=10000,
+                    protocol="line")  # try batch_size=10000
     client_write_end_time = time.perf_counter()
-    print(CLIENT_ID + " wrote the Generated Data in: {time}s".format(
-        time=client_write_end_time - client_write_start_time))
-    GLOBAL_DATA.clear()
+    welding_write_time_to_DB = client_write_end_time - client_write_start_time
+
+    logging.debug(CLIENT_ID + " stored the welding generated data in: %.5f seconds", welding_write_time_to_DB)
+    WELDING_DATA.clear()
 
 
-def machine_workflow(thread_name):
-    # logging.info("%s: Starting", thread_name)
-    global GLOBAL_MACHINE_WORKFLOW_CYCLE, GLOBAL_DATA, GLOBAL_ITERATOR_GENERATE_DATA, GLOBAL_THREAD_START_TIME, \
-        GLOBAL_THREAD_END_TIME
+def welding_workflow():
+    logging.debug("Starting Welding Workflow Cycle Thread...")
 
-    while GLOBAL_MACHINE_WORKFLOW_CYCLE:
+    global MACHINE_WORKFLOW_CYCLE, ITERATOR_GENERATE_DATA, THREAD_START_TIME, THREAD_END_TIME, WELDING_ITERATOR_WORKFLOW
 
-        # thread_start_time = time.thread_time()
-        generate_data_thread = threading.Thread(target=generate_data, args=("Generate Data Thread",), daemon=True)
+    while MACHINE_WORKFLOW_CYCLE:
+
+        generate_data_thread = threading.Thread(target=welding_data_generation_simulation, args=(), daemon=True)
         generate_data_thread.start()
+        # logging.debug("Thread ID, welding_data_generation_simulation: ", generate_data_thread.get_ident())
         # generate_data_thread.join()
-        # thread_end_time = time.thread_time()
-        # GEN_THREAD_TIME_DATA.append(thread_end_time - thread_start_time)  # thread_time
-        # GEN_THREAD_ITERATION_DATA.append(GEN_THREAD_ITERATION_AUX)  # thread_iterator number
-        # GEN_THREAD_ITERATION_AUX += 1
+        ITERATOR_GENERATE_DATA += 1
+        WELDING_ITERATOR_WORKFLOW += 1
 
-        # print("The time spent is {}".format(GLOBAL_THREAD_END_TIME - GLOBAL_THREAD_START_TIME))
-
-        GLOBAL_ITERATOR_GENERATE_DATA += 1
-
-        if GLOBAL_ITERATOR_GENERATE_DATA >= NUMBER_ITERATIONS_TILL_WRITE:
-            store_data_thread = threading.Thread(target=store_data, args=("Store Data Thread",), daemon=True)
+        if ITERATOR_GENERATE_DATA >= NUMBER_ITERATIONS_TILL_WRITE:
+            store_data_thread = threading.Thread(target=store_welding_generation_DB, args=(), daemon=True)
             store_data_thread.start()
-            GLOBAL_ITERATOR_GENERATE_DATA = 0
+            # logging.debug("Thread ID, store_welding_generation_DB: ", store_data_thread.get_ident())
+            ITERATOR_GENERATE_DATA = 0
             store_data_thread.join()
 
+        if WELDING_ITERATOR_WORKFLOW >= MAX_CYCLE_LIMIT:  # Problem of generating data and it not being saved MAX_CYCLE Limit vs NUMBERS_ITER
+            # logging.info("Welding iterator workflow passed MAX_CYCLE_LIMIT of: " + str(MAX_CYCLE_LIMIT))
+            MACHINE_WORKFLOW_CYCLE = False
 
-def has_duplicate(tmp_list):
+
+def check_duplicate_timestamp_unused():
     """
-    Checks to see if a given list has any duplicate value.
-
-    :returns: False if list has no duplicate.
-    """
-
-    set_of_elems = set()
-    for elem in tmp_list:
-        if elem in set_of_elems:
-            return True
-        else:
-            set_of_elems.add(elem)
-    return False
-
-
-def get_db_data():
-    """
-    Checks if client's DB has any duplicate value timestamp
+    Checks if client's DB has any duplicate timestamp value
     """
 
     data = db.query("SELECT * FROM weldingEvents;")
@@ -194,151 +190,162 @@ def get_db_data():
     for point in points:
         # print("Time: {}, Welding value: {}".format(point['time'], point['welding_value']))
         timestamp_list.append(point['time'])
-
-    if has_duplicate(timestamp_list):
-        pass
-        # print(client_id + ' database contains duplicate timestamps.\n')
-        # client.publish(topic_name, "REPEATED_TIMESTAMP")
+    """
+    if has_duplicate_values(timestamp_list):
+        logging.debug(CLIENT_ID + ' database contains duplicate timestamps.\n')
+        mqtt_client.publish(CLIENT_TOPIC, "REPEATED_TIMESTAMP")
     else:
-        print('No duplicate timestamp found in client\'s database.\n')
-
-
-def send_client_data(thread_name):
+        pass
+        logging.debug('No duplicate timestamp found in client\'s database.\n')
     """
-    Send client's DB to master's DB
-    """
-    global MASTER_REQ_INFO
 
-    logging.info("%s: Starting", thread_name)
+def send_client_data_to_master():
+    """
+    Send Client's DB data to Master's DB through influxDB
+    """
+    logging.debug("Sending all data in %s to master_db", CLIENT_DB_NAME)
+    global MASTER_REQ_INFO, CLIENT_SENT_ALL_DATA
     db.switch_database(CLIENT_DB_NAME)
-    # global DB_LOCK
-    # DB_LOCK.acquire()
+
     client_write_start_time = time.perf_counter()
-    # machine_workflow_thread.do_run = False
     send_data = db.query('SELECT * INTO master_db..weldingEvents FROM weldingEvents GROUP BY *;')
-
-    # machine_workflow_thread.do_run = True
-    # bind_params={"$client_db_name": client_db_name}
-    # )
-
-    # params = {"client_db_name": client_db_name}
-    # send_data = db.query('SELECT * INTO master_db..weldingEvents FROM client_db_name WHERE client_db_name=$client_db_name GROUP BY *;', bind_params=params)  # ,
-
-    '''
-    query('SELECT * FROM alerts '
-          'WHERE time>=$start AND time<$stop '
-          'AND client_id=$client AND rule_id=$rule',
-          bind_params=params
-          )
-    '''
-
     client_write_end_time = time.perf_counter()
-    # DB_LOCK.release()
-    print(CLIENT_ID + " sent all its Data to Master\'s DB in: {time}s".format(
-        time=client_write_end_time - client_write_start_time))
-    # print("Query Successful: ", send_data)
-    client.publish(CLIENT_TOPIC, "ALL_INFORMATION_SENT")
-    global CLIENT_SENT_ALL_DATA
+
+    client_write_time_to_master = client_write_end_time - client_write_start_time
+    logging.info(CLIENT_ID + " sent Data to Master in: {%.5f} seconds\n", client_write_time_to_master)
+
+    # logging.info("Query Successful: ", str(send_data))
+
+    mqtt_client.publish(CLIENT_TOPIC, "ALL_INFORMATION_SENT", qos=1, retain=False)
+
     CLIENT_SENT_ALL_DATA = True
     MASTER_REQ_INFO = False
-    '''
-     remove_data = db.query(
-         query='DROP SERIES FROM weldingEvents WHERE client=$client;',
-         params={"client": client_id}
-     )
-     '''
 
 
-def on_connect(client, userdata, flags, rc):
+def clear_clientDB_data():
+    """
+    Clears every value from client's DB.
+    """
+
+    db.switch_database(CLIENT_DB_NAME)
+    # db.drop_database(CLIENT_DB_NAME)
+
+    query = "DROP SERIES FROM weldingEvents WHERE client=$client;"
+    bind_params = {'client': CLIENT_ID}
+    # logging.info("Starting to clean client DB..")
+    deleted_data = db.query(query, bind_params=bind_params)
+    # logging.info("Deleted data query: ", deleted_data)
+    # logging.info("Deleted client DB..")
+
+
+def influxDB_terminate():
+    db.close()
+
+
+def init_logging_config():
+
+    logging.root.handlers = []
+
+    if 'DEBUG_MODE' in sys.argv:
+        logging.basicConfig(filename=SOLUTION_PATH + '\\' + CLIENT_ID + '.log', format='%(asctime)s : %(levelname)s : %(message)s',
+                            level=logging.DEBUG, filemode='a')
+    else:
+        logging.basicConfig(filename=SOLUTION_PATH + '\\' + CLIENT_ID + '.log', format='%(asctime)s : %(levelname)s : %(message)s',
+                            level=logging.INFO, filemode='a')
+
+    # logging.basicConfig(format=thread_format, level=logging.INFO, datefmt="%H:%M:%S")
+
+    # set up logging to console
+    console = logging.StreamHandler()
+    console.setLevel(logging.INFO)
+
+    # set a format which is simpler for console use
+    formatter = logging.Formatter('%(asctime)s : %(levelname)s : %(message)s')
+    console.setFormatter(formatter)
+    logging.getLogger("").addHandler(console)
+
+
+# MQTT Protocols
+
+
+def on_connect(client, userdata, message, return_code):
     """
     MQTT connect protocol
 
-    RC:
-    0: Connection successful
-    1: Connection refused – incorrect protocol version
-    2: Connection refused – invalid client identifier
-    3: Connection refused – server unavailable
-    4: Connection refused – bad username or password
-    5: Connection refused – not authorised
-    6-255: Currently unused.
+    @param client:
+        the client instance for this callback
+    @param userdata:
+        the private user data as set in Client() or userdata_set()
+    @param message:
+        response message sent by the broker
+    @param return_code:
+        the connection result
+        0: Connection successful
+        1: Connection refused – incorrect protocol version
+        2: Connection refused – invalid client identifier
+        3: Connection refused – server unavailable
+        4: Connection refused – bad username or password
+        5: Connection refused – not authorised
+        6-255: Currently unused.
     """
 
-    if rc != 0:
-        print(CLIENT_ID + " - Error Connecting, RC: ", rc)
+    if return_code != 0:
+        logging.info(CLIENT_ID + " - Error Connecting, Error Code: ", return_code)
+        client.reconnect()
     else:
-        print(CLIENT_ID + " - Successfully Connected to Broker.")
+        logging.info(CLIENT_ID + " - Successfully Connected to Broker.\n")
         client.subscribe("topic/simulation/clients/#")  # subscribes to every topic of clients including itself
-        client.subscribe("topic/simulation/master")
+        client.subscribe("topic/simulation/master", qos=1)
+
+
+def on_disconnect(client, userdata, rc):
+    logging.info("%s is disconnecting with reason: %s ", CLIENT_ID, str(rc))
 
 
 def on_message(client, userdata, message):
     """
     Receives the messages that are published through the broker
     """
-    global GLOBAL_MACHINE_WORKFLOW_CYCLE
-    decoded_message = str(message.payload.decode("utf-8"))
 
     if message.topic == "topic/simulation/master":
+        decoded_message = str(message.payload.decode("utf-8"))
+        global MACHINE_WORKFLOW_CYCLE, MASTER_REQ_INFO
+
         if decoded_message == "GET_INFORMATION":
             mqtt_protocol_print(message)
-            global MASTER_REQ_INFO
             MASTER_REQ_INFO = True
-        if decoded_message == "DATA_RECEIVED_FROM_" + CLIENT_ID:
+
+        elif decoded_message == "DATA_RECEIVED_FROM_" + CLIENT_ID:
+            mqtt_protocol_print(message)
             pass
-            # mqtt_protocol_print(message)
 
-        if decoded_message == "REQ_DONE":
-            GLOBAL_MACHINE_WORKFLOW_CYCLE = False
-    """
-    if "topic/simulation/clients/" not in message.topic:
-        print("message received: ", decoded_message)
-        print("message topic: ", message.topic)
-        print("message qos: ", message.qos)  # 0, 1 or 2.
-        print("message retain flag: ", message.retain, "\n")
-    """
-    # if decoded_message == "GET_INFORMATION" and message.topic == "topic/simulation/master":
-    #    global MASTER_REQ_INFO
-    #    MASTER_REQ_INFO = True
+        elif decoded_message == "REQUEST_FINISHED":
+            mqtt_protocol_print(message)
+            # MACHINE_WORKFLOW_CYCLE = False
 
 
-def clear_data(client_db):
-    """
-    Clears every value from client's DB.
-    """
-
-    query = "DROP SERIES FROM weldingEvents WHERE client=$client;"
-    bind_params = {'client': CLIENT_ID}
-    remove_data = client_db.query(query, bind_params=bind_params)
-
-    # logging.debug("Removed data after sending its data to Master's Database: ", remove_data)
-    data = client_db.query("SELECT * FROM weldingEvents;")
-    # logging.debug('AFTER DELETION: ', data.raw)
-
-
-def mqtt_init(tmp_client):
+def mqtt_init(client):
     """
     Connects to Broker and initializes protocols
     """
 
-    tmp_client.on_connect = on_connect
-    tmp_client.on_message = on_message
-    broker_address = "broker.hivemq.com"  # broker_address = "localhost"
-    tmp_client.connect(broker_address, port=1883)  # connect to broker
+    # broker_address = "broker.hivemq.com"
+    broker_address = "localhost"
+    broker_port = 1883
+
+    client.on_connect = on_connect
+    client.on_message = on_message
+
+    try:
+        client.connect(broker_address, port=broker_port)
+    except ConnectionError:
+        logging.info("Error connecting to Broker: %s, on Port: %s" % (broker_address, broker_port))
+        client.reconnect()
 
 
-def init_client_variables():
-    pass
-
-
-def init_logging_config():
-    # thread_format = "%(asctime)s: %(message)s"
-    if 'DEBUG_MODE' in sys.argv:
-        logging.basicConfig(filename=CLIENT_ID + '.log', format='%(asctime)s - %(message)s', level=logging.DEBUG)
-    else:
-        logging.basicConfig(filename=CLIENT_ID + '.log', format='%(asctime)s - %(message)s', level=logging.INFO)
-
-
-    # logging.basicConfig(format=thread_format, level=logging.INFO, datefmt="%H:%M:%S")
+def mqtt_terminate(client):
+    client.disconnect()
+    client.loop_stop()
 
 
 if __name__ == "__main__":
@@ -346,60 +353,69 @@ if __name__ == "__main__":
     # Arguments
     MACHINE_NUMBER = sys.argv[1]
     NUMBER_ITERATIONS_TILL_WRITE = int(sys.argv[2])
-    NUMBER_POINTS_PER_CYCLE = int(sys.argv[3])
+    NUMBER_GENERATED_POINTS_PER_CYCLE = int(sys.argv[3])
+    SOLUTION_PATH = sys.argv[4]
+    MAX_CYCLE_LIMIT = 600
 
-    # CONST GLOBAL VARIABLES
-
+    # Const Global Variables
     CLIENT_DB_NAME = 'client' + MACHINE_NUMBER + '_db'
     CLIENT_ID = 'client' + MACHINE_NUMBER
     CLIENT_TOPIC = "topic/simulation/clients/" + CLIENT_ID
 
-    # ------------------------------------
-
-    GLOBAL_ITERATOR_GENERATE_DATA = 0
-    GLOBAL_THREAD_START_TIME = None
-    GLOBAL_THREAD_END_TIME = None
-    GLOBAL_MACHINE_WORKFLOW_CYCLE = True
-    GLOBAL_DATA = []
+    # Boolean Global Variables
+    MACHINE_WORKFLOW_CYCLE = True
     CLIENT_SENT_ALL_DATA = False
     MASTER_REQ_INFO = False
 
+    # Global Variables
+    ITERATOR_GENERATE_DATA = 0
+    WELDING_ITERATOR_WORKFLOW = 0
+    THREAD_START_TIME = None
+    THREAD_END_TIME = None
+    WELDING_DATA = []
+
     # ------------------------------------
 
+    # data_end_time = int(time.time() * 1000)  # milliseconds
+
+    # Logging Configuration
     init_logging_config()
 
+    # InfluxDB
     db = InfluxDBClient('localhost', 8086, 'root', 'root', CLIENT_DB_NAME)
     db.create_database(CLIENT_DB_NAME)
+    # clear_clientDB_data()
 
-    clear_data(db)
-    tmp_time = int(time.time() * 1000)  # milliseconds
+    welding_workflow_thread = threading.Thread(target=welding_workflow, args=(), daemon=True)
+    welding_workflow_thread.start()
+    # logging.debug("Thread ID, welding workflow: ", welding_workflow_thread.get_ident())
 
-    # Threads
+    # MQTT Protocol
+    mqtt_client = mqtt.Client()
+    mqtt_init(mqtt_client)
 
-    # Threads init
+    mqtt_client.loop_start()
 
-    machine_workflow_thread = threading.Thread(target=machine_workflow, args=("Machine Workflow Thread",), daemon=True)
-    machine_workflow_thread.start()
-
-    client = mqtt.Client()
-    mqtt_init(client)
-    client.loop_start()
+    mqtt_client.publish(CLIENT_TOPIC, "WORKING", qos=0, retain=True)
 
     while not MASTER_REQ_INFO:
         pass
 
-    client.publish(CLIENT_TOPIC, "SENDING_DATA")
-    get_db_data()  # used to confirm if data is valid (no repeated timestamps)
+    mqtt_client.publish(CLIENT_TOPIC, "SENDING_DATA", qos=0, retain=False)
 
-    send_data_thread = threading.Thread(target=send_client_data, args=("Send Data Thread",), daemon=True)
+    # check_duplicate_timestamp()
+
+    send_data_thread = threading.Thread(target=send_client_data_to_master, args=(), daemon=True)
     send_data_thread.start()
+    # logging.debug("Thread ID, send_data_thread: ", send_data_thread.get_ident())
 
     while not CLIENT_SENT_ALL_DATA:
         pass
 
-    while GLOBAL_MACHINE_WORKFLOW_CYCLE:
+    while MACHINE_WORKFLOW_CYCLE:
         pass
 
-    save_thread_time()
-    store_thread_time()
-    # input("Press the <ENTER> key to continue...")
+    # Exit functions
+    save_thread_timestamp_intervals_csv()
+    influxDB_terminate()
+    mqtt_terminate(mqtt_client)

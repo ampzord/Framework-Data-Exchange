@@ -1,33 +1,85 @@
 #!/usr/bin/env python
-
+import logging
 import sys
 import subprocess
 import time
-# tempo maximo de simulacao / limite de 50 ciclos
-#
-TIME_TO_STOP = [10, 30, 60]  # Seconds
-TIME_TILL_REQUEST = [10, 30, 60]  # Seconds
-NUMBER_POINTS_PER_CYCLE = 2500
-NUMBER_ITERATIONS_TILL_WRITE = 5
-NUMBER_CLIENTS = 10
-# MAX_SIMULATION_TIME
-CYCLE_LIMIT = 50
+import os
+
+"""
+NUMBER_CLIENTS = [15]
+NUMBER_ITERATIONS_TILL_WRITE = [15]
+NUMBER_GENERATED_POINTS_PER_CYCLE = [5000]
+TIME_TILL_REQUEST = [30]
+"""
+
+NUMBER_CLIENTS = [10, 15]
+NUMBER_ITERATIONS_TILL_WRITE = [5, 10, 15]
+NUMBER_GENERATED_POINTS_PER_CYCLE = [2500]
+TIME_TILL_REQUEST = [5, 10, 15]
+"""
+NUMBER_CLIENTS = [5, 10, 15]
+NUMBER_ITERATIONS_TILL_WRITE = [5, 10, 15]
+NUMBER_GENERATED_POINTS_PER_CYCLE = [2500, 5000]
+TIME_TILL_REQUEST = [5, 10, 15]
+"""
+
+def init_logging_config():
+    logging.basicConfig(level=logging.INFO)
+    console = logging.StreamHandler()
+    console.setLevel(logging.INFO)
+
+    # set a format which is simpler for console use
+    formatter = logging.Formatter('%(asctime)s : %(levelname)s : %(message)s')
+    console.setFormatter(formatter)
+    logging.getLogger("").addHandler(console)
 
 
+def create_solution_directory(clients, number_iterations, number_generated, time_till_req):
+    sol_path = 'logs\\' + str(clients) + '_' + str(number_iterations) + '_' + str(number_generated) + '_' + \
+               str(time_till_req)
 
-# --------
-# Is this a Interesting Variable ?
+    if not os.path.exists(sol_path):
+        directory_path = os.getcwd()
+        path = os.path.join(directory_path, sol_path)
+        os.mkdir(path, mode=0o666)
 
-# number of points to write to client's DB -> 5000 after each NUMBER_ITERATIONS_TILL_WRITE iteration
-# db.write_points(GLOBAL_DATA, database=client_db_name, time_precision='n', batch_size=5000, protocol="line")
+    return sol_path
 
-# try to test more scenarios for a pool of variables -> save data ?
 
 if __name__ == "__main__":
-    for i in range(NUMBER_CLIENTS):
-        proc = subprocess.Popen(["python", "client.py", str(i+1), str(NUMBER_ITERATIONS_TILL_WRITE), str(NUMBER_POINTS_PER_CYCLE)], shell=True)
-    # time.sleep(TIME_TO_STOP)
-    time.sleep(TIME_TILL_REQUEST)
-    subprocess.call([sys.executable, 'master.py', str(NUMBER_CLIENTS)], shell=True)
-    quit()
+
+    # proc2 = subprocess.call([sys.executable, 'cleanInfluxDB.py', str(15)], shell=True)
+
+    # exit()
+
+    init_logging_config()
+    for i in range(1):
+        for number_cli in NUMBER_CLIENTS:
+            for number_iter in NUMBER_ITERATIONS_TILL_WRITE:
+                for number_gen in NUMBER_GENERATED_POINTS_PER_CYCLE:
+                    for time_req in TIME_TILL_REQUEST:
+
+                        solutionPath = create_solution_directory(number_cli, number_iter, number_gen, time_req)
+                        processID = []
+                        for clientNumber in range(number_cli):
+                            proc = subprocess.Popen(["python", "client.py",
+                                                     str(clientNumber + 1),
+                                                     str(number_iter),
+                                                     str(number_gen),
+                                                     solutionPath,
+                                                    "INFO_MODE"],
+                                                    shell=True)
+                            processID.append(proc)
+
+                        time.sleep(time_req)
+                        subprocess.call([sys.executable, 'master.py', str(number_cli), solutionPath, "INFO_MODE"], shell=True)
+                        # proc.wait()
+                        exit_codes = [p.wait() for p in processID]
+                        # clean influxDBs
+                        proc2 = subprocess.call([sys.executable, 'cleanInfluxDB.py', str(number_cli)], shell=True)
+                        processID.clear()
+                        # proc2.wait()
+
+
+
 

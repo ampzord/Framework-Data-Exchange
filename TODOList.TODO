@@ -9,12 +9,16 @@
 Metrics:
     Check if all information that was created arrived to Master
     Time it took to Request the information and for the information to arrive
-    Compare the load capacity of the program running vs running when the Request is done (load capacity)
+    Compare the load capacity of the program running vs running when the Request is done (load capacity
+            - CPU or RAM load through python
+
     Variate number of clients
     Variate number of entries (data)
 
     Simulate communication between clients, like real world controllers ?
     Different Specs of machines still holds ?
+
+
 
 
 TODO List:
