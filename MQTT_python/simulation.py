@@ -16,12 +16,14 @@ NUMBER_CLIENTS = [10]
 NUMBER_ITERATIONS_TILL_WRITE = [5, 10]
 NUMBER_GENERATED_POINTS_PER_CYCLE = [2500]
 TIME_TILL_REQUEST = [5, 10, 15]
+
 """
 NUMBER_CLIENTS = [5, 10, 15]
 NUMBER_ITERATIONS_TILL_WRITE = [5, 10, 15]
 NUMBER_GENERATED_POINTS_PER_CYCLE = [2500, 5000]
 TIME_TILL_REQUEST = [5, 10, 15]
 """
+
 
 def init_logging_config():
     logging.basicConfig(level=logging.INFO)
@@ -73,12 +75,11 @@ if __name__ == "__main__":
 
                         time.sleep(time_req)
                         subprocess.call([sys.executable, 'master.py', str(number_cli), solutionPath, "INFO_MODE"], shell=True)
-                        # proc.wait()
                         exit_codes = [p.wait() for p in processID]
+
                         # clean influxDBs
                         proc2 = subprocess.call([sys.executable, 'cleanInfluxDB.py', str(number_cli)], shell=True)
                         processID.clear()
-                        # proc2.wait()
 
 
 
