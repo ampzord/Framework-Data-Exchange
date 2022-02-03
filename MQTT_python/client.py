@@ -105,6 +105,7 @@ def welding_data_generation_simulation():
     logging.debug("Welding Simulator Working...")
     global WELDING_DATA, GEN_THREAD_TIME_DATA, GEN_THREAD_ITERATION_AUX, GEN_THREAD_REQUEST
     measurement_name = "weldingEvents"
+    mathematical_calculation()
 
     for i in range(NUMBER_GENERATED_POINTS_PER_CYCLE):
         # start_time = time.time()
