@@ -44,22 +44,7 @@ GEN_THREAD_ITERATION_AUX = 1
 
 # -------------
 
-itera = 0
-prev_ts = 0
-
 # Util function
-
-
-def now() -> int:
-    global itera, prev_ts
-    ts = time.time_ns()
-    if ts == prev_ts:
-        itera += 1
-    else:
-        itera = 0
-        prev_ts = ts
-    return ts + itera
-
 
 def mathematical_calculation():
     k = 1 # Initialize denominator
@@ -105,12 +90,11 @@ def welding_data_generation_simulation():
     logging.debug("Welding Simulator Working...")
     global WELDING_DATA, GEN_THREAD_TIME_DATA, GEN_THREAD_ITERATION_AUX, GEN_THREAD_REQUEST
     measurement_name = "weldingEvents"
-    mathematical_calculation()
 
     for i in range(NUMBER_GENERATED_POINTS_PER_CYCLE):
         # start_time = time.time()
         # logging.info("BEFORE: " + str(start_time))
-        # mathematical_calculation()
+        mathematical_calculation()
         # logging.info("TIME TAKEN BY MATHEMATICAL CALCULATION: " + str(time.time() - start_time))
         welding_value = format(round(random.uniform(0, 30), 4))
         uniqueID = str(i+1)
@@ -174,53 +158,9 @@ def welding_workflow():
             ITERATOR_GENERATE_DATA = 0
             store_data_thread.join()
 
-        if WELDING_ITERATOR_WORKFLOW >= MAX_CYCLE_LIMIT:  # Problem of generating data and it not being saved MAX_CYCLE Limit vs NUMBERS_ITER
+        if WELDING_ITERATOR_WORKFLOW >= MAX_CYCLE_LIMIT:  # condition: max cycle % number generated == 0
             # logging.info("Welding iterator workflow passed MAX_CYCLE_LIMIT of: " + str(MAX_CYCLE_LIMIT))
             MACHINE_WORKFLOW_CYCLE = False
-
-
-def check_duplicate_timestamp_unused():
-    """
-    Checks if client's DB has any duplicate timestamp value
-    """
-
-    data = db.query("SELECT * FROM weldingEvents;")
-    # print('Data raw: ', data.raw)
-    points = data.get_points(tags={'client': CLIENT_ID})
-    timestamp_list = []
-    for point in points:
-        # print("Time: {}, Welding value: {}".format(point['time'], point['welding_value']))
-        timestamp_list.append(point['time'])
-    """
-    if has_duplicate_values(timestamp_list):
-        logging.debug(CLIENT_ID + ' database contains duplicate timestamps.\n')
-        mqtt_client.publish(CLIENT_TOPIC, "REPEATED_TIMESTAMP")
-    else:
-        pass
-        logging.debug('No duplicate timestamp found in client\'s database.\n')
-    """
-
-def send_client_data_to_master():
-    """
-    Send Client's DB data to Master's DB through influxDB
-    """
-    logging.debug("Sending all data in %s to master_db", CLIENT_DB_NAME)
-    global MASTER_REQ_INFO, CLIENT_SENT_ALL_DATA
-    db.switch_database(CLIENT_DB_NAME)
-
-    client_write_start_time = time.perf_counter()
-    send_data = db.query('SELECT * INTO master_db..weldingEvents FROM weldingEvents GROUP BY *;')
-    client_write_end_time = time.perf_counter()
-
-    client_write_time_to_master = client_write_end_time - client_write_start_time
-    logging.info(CLIENT_ID + " sent Data to Master in: {%.5f} seconds\n", client_write_time_to_master)
-
-    # logging.info("Query Successful: ", str(send_data))
-
-    mqtt_client.publish(CLIENT_TOPIC, "ALL_INFORMATION_SENT", qos=1, retain=False)
-
-    CLIENT_SENT_ALL_DATA = True
-    MASTER_REQ_INFO = False
 
 
 def clear_clientDB_data():
@@ -296,7 +236,7 @@ def on_connect(client, userdata, message, return_code):
     else:
         logging.info(CLIENT_ID + " - Successfully Connected to Broker.\n")
         client.subscribe("topic/simulation/clients/#")  # subscribes to every topic of clients including itself
-        client.subscribe("topic/simulation/master", qos=1)
+        # client.subscribe("topic/simulation/master", qos=1)
 
 
 def on_disconnect(client, userdata, rc):
@@ -310,11 +250,10 @@ def on_message(client, userdata, message):
 
     if message.topic == "topic/simulation/master":
         decoded_message = str(message.payload.decode("utf-8"))
-        global MACHINE_WORKFLOW_CYCLE, MASTER_REQ_INFO
+        global MACHINE_WORKFLOW_CYCLE
 
         if decoded_message == "GET_INFORMATION":
             mqtt_protocol_print(message)
-            MASTER_REQ_INFO = True
 
         elif decoded_message == "DATA_RECEIVED_FROM_" + CLIENT_ID:
             mqtt_protocol_print(message)
@@ -365,7 +304,6 @@ if __name__ == "__main__":
 
     # Boolean Global Variables
     MACHINE_WORKFLOW_CYCLE = True
-    CLIENT_SENT_ALL_DATA = False
     MASTER_REQ_INFO = False
 
     # Global Variables
@@ -385,33 +323,17 @@ if __name__ == "__main__":
     # InfluxDB
     db = InfluxDBClient('localhost', 8086, 'root', 'root', CLIENT_DB_NAME)
     db.create_database(CLIENT_DB_NAME)
-    # clear_clientDB_data()
 
     welding_workflow_thread = threading.Thread(target=welding_workflow, args=(), daemon=True)
     welding_workflow_thread.start()
-    # logging.debug("Thread ID, welding workflow: ", welding_workflow_thread.get_ident())
 
     # MQTT Protocol
     mqtt_client = mqtt.Client()
     mqtt_init(mqtt_client)
 
-    mqtt_client.loop_start()
-
     mqtt_client.publish(CLIENT_TOPIC, "WORKING", qos=0, retain=True)
 
-    while not MASTER_REQ_INFO:
-        pass
-
-    mqtt_client.publish(CLIENT_TOPIC, "SENDING_DATA", qos=0, retain=False)
-
-    # check_duplicate_timestamp()
-
-    send_data_thread = threading.Thread(target=send_client_data_to_master, args=(), daemon=True)
-    send_data_thread.start()
-    # logging.debug("Thread ID, send_data_thread: ", send_data_thread.get_ident())
-
-    while not CLIENT_SENT_ALL_DATA:
-        pass
+    mqtt_client.loop_start()
 
     while MACHINE_WORKFLOW_CYCLE:
         pass
