@@ -63,9 +63,16 @@ def on_message(client, userdata, message):
     else:
         mqtt_protocol_print(message)
 
-    if decoded_message == "ALL_INFORMATION_SENT":
-        global RECEIVED_ALL_DATA_FROM_CLIENT_TOTAL
+    if "ALL_INFORMATION_SENT" in decoded_message:
+        global RECEIVED_ALL_DATA_FROM_CLIENT_TOTAL, CLIENT_ID_START, JUMP_TO_NEXT_CLIENT
         RECEIVED_ALL_DATA_FROM_CLIENT_TOTAL += 1
+        CLIENT_ID_START += 1
+
+        try:
+            client_name = message.topic.split('/')
+            client.publish(MASTER_TOPIC_NAME, "DATA_RECEIVED_FROM_" + client_name[3])
+        except ValueError:
+            logging.info("Error splitting topic string in " + client_name[3])
 
         if RECEIVED_ALL_DATA_FROM_CLIENT_TOTAL == int(CLIENT_SIZE):
             global ALL_DATA_RECEIVED
@@ -77,11 +84,10 @@ def on_message(client, userdata, message):
             logging.info("Since Master did Request till all data arrived it took: {%.5f} seconds\n", master_req_time)
             client.publish(MASTER_TOPIC_NAME, "REQUEST_FINISHED", qos=0, retain=False)
 
-        try:
-            client_name = message.topic.split('/')
-            client.publish(MASTER_TOPIC_NAME, "DATA_RECEIVED_FROM_" + client_name[3])
-        except ValueError:
-            logging.info("Error splitting topic string in " + client_name[3])
+        else:
+            master.publish(MASTER_TOPIC_NAME, "GET_INFORMATION_FROM_client" + str(CLIENT_ID_START), qos=0, retain=False)
+
+
 
 
 def mqtt_init(tmp_master):
@@ -176,6 +182,13 @@ if __name__ == "__main__":
     MASTER_DB_NAME = 'master_db'
     MASTER_TOPIC_NAME = 'topic/simulation/master'
 
+    # Const Global Variables
+    # CLIENT_DB_NAME = 'client' + 1 + '_db'
+    # CLIENT_ID = 'client' + MACHINE_NUMBER
+    # CLIENT_TOPIC = "topic/simulation/clients/" + CLIENT_ID
+    CLIENT_ID_START = 1
+    JUMP_TO_NEXT_CLIENT = False
+
     # InfluxDB
     db = InfluxDBClient('localhost', 8086, 'root', 'root', MASTER_DB_NAME)
     db.create_database(MASTER_DB_NAME)
@@ -189,9 +202,9 @@ if __name__ == "__main__":
     mqtt_init(master)
 
     req_start_time = time.perf_counter()
-    master.publish(MASTER_TOPIC_NAME, "GET_INFORMATION", qos=0, retain=False)
-
     master.loop_start()
+
+    master.publish(MASTER_TOPIC_NAME, "GET_INFORMATION_FROM_client" + str(CLIENT_ID_START), qos=0, retain=False)
 
     while not ALL_DATA_RECEIVED:
         pass

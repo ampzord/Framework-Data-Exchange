@@ -44,22 +44,6 @@ GEN_THREAD_ITERATION_AUX = 1
 
 # -------------
 
-itera = 0
-prev_ts = 0
-
-# Util function
-
-
-def now() -> int:
-    global itera, prev_ts
-    ts = time.time_ns()
-    if ts == prev_ts:
-        itera += 1
-    else:
-        itera = 0
-        prev_ts = ts
-    return ts + itera
-
 
 def mathematical_calculation():
     k = 1 # Initialize denominator
@@ -200,6 +184,7 @@ def check_duplicate_timestamp_unused():
         logging.debug('No duplicate timestamp found in client\'s database.\n')
     """
 
+
 def send_client_data_to_master():
     """
     Send Client's DB data to Master's DB through influxDB
@@ -312,7 +297,7 @@ def on_message(client, userdata, message):
         decoded_message = str(message.payload.decode("utf-8"))
         global MACHINE_WORKFLOW_CYCLE, MASTER_REQ_INFO
 
-        if decoded_message == "GET_INFORMATION":
+        if decoded_message == "GET_INFORMATION_FROM_" + CLIENT_ID:
             mqtt_protocol_print(message)
             MASTER_REQ_INFO = True
 
@@ -320,8 +305,8 @@ def on_message(client, userdata, message):
             mqtt_protocol_print(message)
             pass
 
-        elif decoded_message == "REQUEST_FINISHED":
-            mqtt_protocol_print(message)
+        # elif decoded_message == "REQUEST_FINISHED":
+            # mqtt_protocol_print(message)
             # MACHINE_WORKFLOW_CYCLE = False
 
 
@@ -385,11 +370,9 @@ if __name__ == "__main__":
     # InfluxDB
     db = InfluxDBClient('localhost', 8086, 'root', 'root', CLIENT_DB_NAME)
     db.create_database(CLIENT_DB_NAME)
-    # clear_clientDB_data()
 
     welding_workflow_thread = threading.Thread(target=welding_workflow, args=(), daemon=True)
     welding_workflow_thread.start()
-    # logging.debug("Thread ID, welding workflow: ", welding_workflow_thread.get_ident())
 
     # MQTT Protocol
     mqtt_client = mqtt.Client()
@@ -404,11 +387,8 @@ if __name__ == "__main__":
 
     mqtt_client.publish(CLIENT_TOPIC, "SENDING_DATA", qos=0, retain=False)
 
-    # check_duplicate_timestamp()
-
     send_data_thread = threading.Thread(target=send_client_data_to_master, args=(), daemon=True)
     send_data_thread.start()
-    # logging.debug("Thread ID, send_data_thread: ", send_data_thread.get_ident())
 
     while not CLIENT_SENT_ALL_DATA:
         pass
