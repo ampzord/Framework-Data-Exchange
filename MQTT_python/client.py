@@ -110,7 +110,6 @@ def welding_data_generation_simulation():
     for i in range(NUMBER_GENERATED_POINTS_PER_CYCLE):
         # start_time = time.time()
         # logging.info("BEFORE: " + str(start_time))
-        # mathematical_calculation()
         # logging.info("TIME TAKEN BY MATHEMATICAL CALCULATION: " + str(time.time() - start_time))
         welding_value = format(round(random.uniform(0, 30), 4))
         uniqueID = str(i+1)
@@ -261,7 +260,7 @@ def init_logging_config():
     console.setLevel(logging.INFO)
 
     # set a format which is simpler for console use
-    formatter = logging.Formatter('%(asctime)s : %(levelname)s : %(message)s')
+    formatter = logging.Formatter('%(asctime)s : ' + SOLUTION_PATH + ' : %(levelname)s: %(message)s')
     console.setFormatter(formatter)
     logging.getLogger("").addHandler(console)
 
