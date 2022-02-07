@@ -13,6 +13,7 @@ The communication between Master and its Clients is done through MQTT Protocol w
 import time
 import sys
 import os
+import re
 
 # 3rd Party Packages
 import paho.mqtt.client as mqtt
@@ -67,6 +68,15 @@ def on_message(client, userdata, message):
         global RECEIVED_ALL_DATA_FROM_CLIENT_TOTAL
         RECEIVED_ALL_DATA_FROM_CLIENT_TOTAL += 1
 
+        try:
+            client_name = message.topic.split('/')
+            client.publish(MASTER_TOPIC_NAME, "DATA_RECEIVED_FROM_" + client_name[3])
+            client_id_temp = int(re.findall("\d+", client_name[3])[0])
+        except ValueError:
+            logging.info("Error splitting topic string in " + client_name[3])
+
+        client_id_temp += clients_per_grp
+
         if RECEIVED_ALL_DATA_FROM_CLIENT_TOTAL == int(CLIENT_SIZE):
             global ALL_DATA_RECEIVED
             ALL_DATA_RECEIVED = True
@@ -77,11 +87,8 @@ def on_message(client, userdata, message):
             logging.info("Since Master did Request till all data arrived it took: {%.5f} seconds\n", master_req_time)
             client.publish(MASTER_TOPIC_NAME, "REQUEST_FINISHED", qos=0, retain=False)
 
-        try:
-            client_name = message.topic.split('/')
-            client.publish(MASTER_TOPIC_NAME, "DATA_RECEIVED_FROM_" + client_name[3])
-        except ValueError:
-            logging.info("Error splitting topic string in " + client_name[3])
+        elif client_id_temp <= int(CLIENT_SIZE):
+            master.publish(MASTER_TOPIC_NAME, "GET_INFORMATION_FROM_client" + str(client_id_temp), qos=0, retain=False)
 
 
 def mqtt_init(tmp_master):
@@ -159,9 +166,38 @@ def init_logging_config():
     console.setLevel(logging.INFO)
 
     # set a format which is simpler for console use
-    formatter = logging.Formatter('%(asctime)s : %(levelname)s : %(message)s')
+    formatter = logging.Formatter('%(asctime)s : ' + SOLUTION_PATH + ' : %(levelname)s : %(message)s')
     console.setFormatter(formatter)
     logging.getLogger("").addHandler(console)
+
+
+# first solution will be starting with lower
+def clientNumberLowestDivisor(clients):  # number of clients 5,10,15,20,25 ?
+    lower_division = 2
+    while not clients % lower_division == 0:
+        lower_division += 1
+
+    concurrent_clients = int(clients / lower_division) # 5
+    clients_per_grp = lower_division # 2
+    solution_string = []
+
+    # print("Concurrent clients:", concurrent_clients)
+    # print("Clients per grp:", clients_per_grp)
+
+    number_start_original = 1
+    for i in range(clients_per_grp):
+        number_start = number_start_original
+        temp_sol = []
+        for j in range(concurrent_clients):
+            # print("number start:", number_start)
+            temp_sol.append(str(number_start) + ",")
+            number_start += 1
+
+        solution_string.append(temp_sol)
+        number_start_original += 1
+        # print("Number start original:", number_start_original)
+
+    return solution_string, concurrent_clients, clients_per_grp
 
 
 if __name__ == "__main__":
@@ -175,6 +211,8 @@ if __name__ == "__main__":
     RECEIVED_ALL_DATA_FROM_CLIENT_TOTAL = 0
     MASTER_DB_NAME = 'master_db'
     MASTER_TOPIC_NAME = 'topic/simulation/master'
+    solution_string, concurrent_clients, clients_per_grp = clientNumberLowestDivisor(int(CLIENT_SIZE))
+    first_sol_string = ''.join(solution_string[0])
 
     # InfluxDB
     db = InfluxDBClient('localhost', 8086, 'root', 'root', MASTER_DB_NAME)
@@ -189,7 +227,8 @@ if __name__ == "__main__":
     mqtt_init(master)
 
     req_start_time = time.perf_counter()
-    master.publish(MASTER_TOPIC_NAME, "GET_INFORMATION", qos=0, retain=False)
+    master.publish(MASTER_TOPIC_NAME, "GET_INFORMATION_" + first_sol_string, qos=0, retain=False)
+    # print("GET_INFORMATION_" + first_sol_string)
 
     master.loop_start()
 

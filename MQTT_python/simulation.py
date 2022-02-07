@@ -12,16 +12,18 @@ NUMBER_GENERATED_POINTS_PER_CYCLE = [5000]
 TIME_TILL_REQUEST = [30]
 """
 
-NUMBER_CLIENTS = [10]
+NUMBER_CLIENTS = [10, 15]
 NUMBER_ITERATIONS_TILL_WRITE = [5, 10]
 NUMBER_GENERATED_POINTS_PER_CYCLE = [2500]
-TIME_TILL_REQUEST = [5, 10, 15]
+TIME_TILL_REQUEST = [5, 10]
+
 """
 NUMBER_CLIENTS = [5, 10, 15]
 NUMBER_ITERATIONS_TILL_WRITE = [5, 10, 15]
 NUMBER_GENERATED_POINTS_PER_CYCLE = [2500, 5000]
 TIME_TILL_REQUEST = [5, 10, 15]
 """
+
 
 def init_logging_config():
     logging.basicConfig(level=logging.INFO)
@@ -48,12 +50,12 @@ def create_solution_directory(clients, number_iterations, number_generated, time
 
 if __name__ == "__main__":
 
-    # proc2 = subprocess.call([sys.executable, 'cleanInfluxDB.py', str(15)], shell=True)
+    # proc2 = subprocess.call([sys.executable, 'cleanInfluxDB.py', str(10)], shell=True)
 
     # exit()
 
     init_logging_config()
-    for i in range(1):
+    for i in range(3):
         for number_cli in NUMBER_CLIENTS:
             for number_iter in NUMBER_ITERATIONS_TILL_WRITE:
                 for number_gen in NUMBER_GENERATED_POINTS_PER_CYCLE:
@@ -61,25 +63,24 @@ if __name__ == "__main__":
 
                         solutionPath = create_solution_directory(number_cli, number_iter, number_gen, time_req)
                         processID = []
+
                         for clientNumber in range(number_cli):
                             proc = subprocess.Popen(["python", "client.py",
                                                      str(clientNumber + 1),
                                                      str(number_iter),
                                                      str(number_gen),
                                                      solutionPath,
-                                                    "INFO_MODE"],
+                                                     "DEBUG_MODE"],
                                                     shell=True)
                             processID.append(proc)
 
                         time.sleep(time_req)
-                        subprocess.call([sys.executable, 'master.py', str(number_cli), solutionPath, "INFO_MODE"], shell=True)
+                        subprocess.call([sys.executable, 'master.py', str(number_cli), solutionPath, "DEBUG_MODE"],
+                                        shell=True)
                         # proc.wait()
                         exit_codes = [p.wait() for p in processID]
                         # clean influxDBs
                         proc2 = subprocess.call([sys.executable, 'cleanInfluxDB.py', str(number_cli)], shell=True)
+                        print("Cleaned influxDB databases")
                         processID.clear()
                         # proc2.wait()
-
-
-
-

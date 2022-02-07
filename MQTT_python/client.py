@@ -261,7 +261,7 @@ def init_logging_config():
     console.setLevel(logging.INFO)
 
     # set a format which is simpler for console use
-    formatter = logging.Formatter('%(asctime)s : %(levelname)s : %(message)s')
+    formatter = logging.Formatter('%(asctime)s : ' + SOLUTION_PATH + ' : %(levelname)s : %(message)s')
     console.setFormatter(formatter)
     logging.getLogger("").addHandler(console)
 
@@ -303,6 +303,21 @@ def on_disconnect(client, userdata, rc):
     logging.info("%s is disconnecting with reason: %s ", CLIENT_ID, str(rc))
 
 
+def information_requested(decoded_message):
+    if "GET_INFORMATION_" in decoded_message:
+        # parse decoded message
+        split_string = decoded_message.split("_")  # 1,4,7,10,13,
+        # print("SplitString: ", split_string)
+        if "," in split_string[2]:
+            split_of_comma_string = split_string[2].split(",")  # 1 4 7 10 13
+            # print("split_of_comma_string: ", split_of_comma_string)
+            for i in range(len(split_of_comma_string)):
+                if MACHINE_NUMBER in split_of_comma_string[i]:
+                    print("MACHINE NUMBER: ", MACHINE_NUMBER)
+                    return True
+    return False
+
+
 def on_message(client, userdata, message):
     """
     Receives the messages that are published through the broker
@@ -312,7 +327,7 @@ def on_message(client, userdata, message):
         decoded_message = str(message.payload.decode("utf-8"))
         global MACHINE_WORKFLOW_CYCLE, MASTER_REQ_INFO
 
-        if decoded_message == "GET_INFORMATION":
+        if decoded_message == "GET_INFORMATION_FROM_" + CLIENT_ID or information_requested(decoded_message):
             mqtt_protocol_print(message)
             MASTER_REQ_INFO = True
 
