@@ -90,18 +90,19 @@ def welding_data_generation_simulation():
     logging.debug("Welding Simulator Working...")
     global WELDING_DATA, GEN_THREAD_TIME_DATA, GEN_THREAD_ITERATION_AUX, GEN_THREAD_REQUEST
     measurement_name = "weldingEvents"
+    mathematical_calculation()
 
     for i in range(NUMBER_GENERATED_POINTS_PER_CYCLE):
         # start_time = time.time()
         # logging.info("BEFORE: " + str(start_time))
-        mathematical_calculation()
         # logging.info("TIME TAKEN BY MATHEMATICAL CALCULATION: " + str(time.time() - start_time))
         welding_value = format(round(random.uniform(0, 30), 4))
         uniqueID = str(i+1)
         # time.clock_gettime_ns(time.CLOCK_REALTIME))
         # time_now_temp = int(time.time() * 1000)
         time_now_temp = time.time_ns()
-        WELDING_DATA.append("{measurement},client={client},uniqueID={uniqueID} welding_value={welding_value} {timestamp}"
+        WELDING_DATA.append("{measurement},client={client},uniqueID={uniqueID} welding_value={welding_value} {"
+                            "timestamp} "
                             .format(measurement=measurement_name,
                                     client=CLIENT_ID,
                                     uniqueID=uniqueID,
@@ -201,7 +202,7 @@ def init_logging_config():
     console.setLevel(logging.INFO)
 
     # set a format which is simpler for console use
-    formatter = logging.Formatter('%(asctime)s : %(levelname)s : %(message)s')
+    formatter = logging.Formatter('%(asctime)s : ' + SOLUTION_PATH + ' : %(levelname)s : %(message)s')
     console.setFormatter(formatter)
     logging.getLogger("").addHandler(console)
 
