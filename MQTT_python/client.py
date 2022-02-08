@@ -246,7 +246,7 @@ def init_logging_config():
     console.setLevel(logging.INFO)
 
     # set a format which is simpler for console use
-    formatter = logging.Formatter('%(asctime)s : %(levelname)s : %(message)s')
+    formatter = logging.Formatter('%(asctime)s : ' + SOLUTION_PATH + ' : %(levelname)s : %(message)s')
     console.setFormatter(formatter)
     logging.getLogger("").addHandler(console)
 
