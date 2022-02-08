@@ -83,7 +83,7 @@ def mathematical_calculation():
 
 def save_thread_timestamp_intervals_csv():
     """
-    Writes the saved elapsed timestamp from generating_data() thread to clientID.csv
+    Writes the saved elapsed timestamp from generating_data() thread to clientID_thread_time_elapsed.csv
     """
 
     tmp_dict = {'Thread_Iteration': GEN_THREAD_ITERATION_DATA,
@@ -312,8 +312,10 @@ def information_requested(decoded_message):
             split_of_comma_string = split_string[2].split(",")  # 1 4 7 10 13
             # print("split_of_comma_string: ", split_of_comma_string)
             for i in range(len(split_of_comma_string)):
-                if MACHINE_NUMBER in split_of_comma_string[i]:
-                    print("MACHINE NUMBER: ", MACHINE_NUMBER)
+                # print("split_of_comma_string[i]: ", split_of_comma_string[i])
+                # print("MACHINE_NUMBER: ", MACHINE_NUMBER)
+                if MACHINE_NUMBER == split_of_comma_string[i]:
+                    # print("IM IN - MACHINE NUMBER: ", MACHINE_NUMBER)
                     return True
     return False
 

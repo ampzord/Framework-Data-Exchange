@@ -75,8 +75,6 @@ def on_message(client, userdata, message):
         except ValueError:
             logging.info("Error splitting topic string in " + client_name[3])
 
-        client_id_temp += clients_per_grp
-
         if RECEIVED_ALL_DATA_FROM_CLIENT_TOTAL == int(CLIENT_SIZE):
             global ALL_DATA_RECEIVED
             ALL_DATA_RECEIVED = True
@@ -87,8 +85,25 @@ def on_message(client, userdata, message):
             logging.info("Since Master did Request till all data arrived it took: {%.5f} seconds\n", master_req_time)
             client.publish(MASTER_TOPIC_NAME, "REQUEST_FINISHED", qos=0, retain=False)
 
-        elif client_id_temp <= int(CLIENT_SIZE):
-            master.publish(MASTER_TOPIC_NAME, "GET_INFORMATION_FROM_client" + str(client_id_temp), qos=0, retain=False)
+        else:
+             i = 0
+             for tmp_list in solution_string:
+                j = 0
+                for item in tmp_list:
+                    if str(client_id_temp) + ',' == tmp_list[j]: #Encontrei lista e valor
+                        # Make get_information of next element in list
+                        if len(solution_string[i]) > 1:  #continua
+                            string_to_req = "GET_INFORMATION_FROM_client" + str(solution_string[i][j+1])
+                            size_string = len(string_to_req)
+
+                            Remove_last_item_from_string = string_to_req[:size_string - 1]
+                            master.publish(MASTER_TOPIC_NAME, Remove_last_item_from_string, qos=0,
+                                           retain=False)
+
+                        # Remove element
+                        solution_string[i].pop(j)
+                    j += 1
+                i += 1
 
 
 def mqtt_init(tmp_master):
@@ -171,33 +186,35 @@ def init_logging_config():
     logging.getLogger("").addHandler(console)
 
 
-# first solution will be starting with lower
-def clientNumberLowestDivisor(clients):  # number of clients 5,10,15,20,25 ?
-    lower_division = 2
-    while not clients % lower_division == 0:
-        lower_division += 1
+def clientNumberHighestDivisor(clients):  # number of clients 5,10,15,20,25 ?
+    highest_divisor = clients - 1
+    while not clients % highest_divisor == 0:  # clients = 15
+        highest_divisor -= 1
 
-    concurrent_clients = int(clients / lower_division) # 5
-    clients_per_grp = lower_division # 2
+    clients_per_grp = int(clients / highest_divisor)  # 15 / 5 --------> 3
+    concurrent_clients = highest_divisor  # 5
     solution_string = []
 
     # print("Concurrent clients:", concurrent_clients)
     # print("Clients per grp:", clients_per_grp)
-
-    number_start_original = 1
-    for i in range(clients_per_grp):
-        number_start = number_start_original
+    number_start = 1
+    for i in range(concurrent_clients):
         temp_sol = []
-        for j in range(concurrent_clients):
-            # print("number start:", number_start)
+        for j in range(clients_per_grp):
             temp_sol.append(str(number_start) + ",")
             number_start += 1
 
         solution_string.append(temp_sol)
-        number_start_original += 1
-        # print("Number start original:", number_start_original)
 
     return solution_string, concurrent_clients, clients_per_grp
+
+
+def getRequestListOfClients(nested_list):
+    new_list = []
+    for list in nested_list:
+        new_list.append(list[0])
+    # print(new_list)
+    return new_list
 
 
 if __name__ == "__main__":
@@ -211,8 +228,12 @@ if __name__ == "__main__":
     RECEIVED_ALL_DATA_FROM_CLIENT_TOTAL = 0
     MASTER_DB_NAME = 'master_db'
     MASTER_TOPIC_NAME = 'topic/simulation/master'
-    solution_string, concurrent_clients, clients_per_grp = clientNumberLowestDivisor(int(CLIENT_SIZE))
-    first_sol_string = ''.join(solution_string[0])
+    solution_string, concurrent_clients, clients_per_grp = clientNumberHighestDivisor(int(CLIENT_SIZE))
+    # get each first item from nested list
+    print("solution_string:")
+    print(solution_string)
+    first_request = getRequestListOfClients(solution_string)
+    first_sol_string = ''.join(first_request)
 
     # InfluxDB
     db = InfluxDBClient('localhost', 8086, 'root', 'root', MASTER_DB_NAME)
@@ -229,6 +250,7 @@ if __name__ == "__main__":
     req_start_time = time.perf_counter()
     master.publish(MASTER_TOPIC_NAME, "GET_INFORMATION_" + first_sol_string, qos=0, retain=False)
     # print("GET_INFORMATION_" + first_sol_string)
+
 
     master.loop_start()
 
