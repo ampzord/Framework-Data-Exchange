@@ -85,7 +85,7 @@ def welding_data_generation_simulation():
     """
     Generates the welding values with its assigned timestamps to be inserted in the DB.
     """
-    thread_start_time = time.thread_time_ns()
+    # thread_start_time = time.thread_time_ns()
     logging.debug("Welding Simulator Working...")
     global WELDING_DATA, GEN_THREAD_TIME_DATA, GEN_THREAD_ITERATION_AUX, GEN_THREAD_REQUEST
     measurement_name = "weldingEvents"
@@ -108,15 +108,15 @@ def welding_data_generation_simulation():
                                     welding_value=welding_value,
                                     timestamp=time_now_temp))
 
-    thread_end_time = time.thread_time_ns()
-    GEN_THREAD_TIME_DATA.append(thread_end_time - thread_start_time)  # thread_time
-    GEN_THREAD_ITERATION_DATA.append(GEN_THREAD_ITERATION_AUX)  # thread_iterator number
+    # thread_end_time = time.thread_time_ns()
+    # GEN_THREAD_TIME_DATA.append(thread_end_time - thread_start_time)  # thread_time
+    # GEN_THREAD_ITERATION_DATA.append(GEN_THREAD_ITERATION_AUX)  # thread_iterator number
 
-    if MASTER_REQ_INFO:
-        GEN_THREAD_REQUEST.append("REQUEST")
-    else:
-        GEN_THREAD_REQUEST.append("IDLE")
-    GEN_THREAD_ITERATION_AUX += 1
+    # if MASTER_REQ_INFO:
+    #    GEN_THREAD_REQUEST.append("REQUEST")
+    # else:
+    #    GEN_THREAD_REQUEST.append("IDLE")
+    #GEN_THREAD_ITERATION_AUX += 1
 
 
 def store_welding_generation_DB():
@@ -140,27 +140,42 @@ def store_welding_generation_DB():
 def welding_workflow():
     logging.debug("Starting Welding Workflow Cycle Thread...")
 
-    global MACHINE_WORKFLOW_CYCLE, ITERATOR_GENERATE_DATA, THREAD_START_TIME, THREAD_END_TIME, WELDING_ITERATOR_WORKFLOW
+    global MACHINE_WORKFLOW_CYCLE, ITERATOR_GENERATE_DATA, THREAD_START_TIME, THREAD_END_TIME, WELDING_ITERATOR_WORKFLOW, GEN_THREAD_ITERATION_AUX, GEN_THREAD_BOOLEAN_ACTIVE, THREAD_DB_START_TIME, THREAD_DB_END_TIME
 
+    extra = 0
     while MACHINE_WORKFLOW_CYCLE:
-
         generate_data_thread = threading.Thread(target=welding_data_generation_simulation, args=(), daemon=True)
+
+        thread_start_time = time.perf_counter_ns()
         generate_data_thread.start()
-        # logging.debug("Thread ID, welding_data_generation_simulation: ", generate_data_thread.get_ident())
-        # generate_data_thread.join()
+        generate_data_thread.join()
+        thread_end_time = time.perf_counter_ns()
+
         ITERATOR_GENERATE_DATA += 1
-        WELDING_ITERATOR_WORKFLOW += 1
 
         if ITERATOR_GENERATE_DATA >= NUMBER_ITERATIONS_TILL_WRITE:
             store_data_thread = threading.Thread(target=store_welding_generation_DB, args=(), daemon=True)
+            THREAD_DB_START_TIME = time.perf_counter_ns()
             store_data_thread.start()
-            # logging.debug("Thread ID, store_welding_generation_DB: ", store_data_thread.get_ident())
-            ITERATOR_GENERATE_DATA = 0
             store_data_thread.join()
+            THREAD_DB_END_TIME = time.perf_counter_ns()
+            extra = THREAD_DB_END_TIME - THREAD_DB_START_TIME
+            ITERATOR_GENERATE_DATA = 0
 
-        if WELDING_ITERATOR_WORKFLOW >= MAX_CYCLE_LIMIT:  # Problem of generating data and it not being saved MAX_CYCLE Limit vs NUMBERS_ITER
+        if WELDING_ITERATOR_WORKFLOW >= MAX_CYCLE_LIMIT-1:  # Problem of generating data and it not being saved MAX_CYCLE Limit vs NUMBERS_ITER
             # logging.info("Welding iterator workflow passed MAX_CYCLE_LIMIT of: " + str(MAX_CYCLE_LIMIT))
             MACHINE_WORKFLOW_CYCLE = False
+
+        GEN_THREAD_TIME_DATA.append((thread_end_time - thread_start_time) + extra)  # thread_time
+        extra = 0
+        GEN_THREAD_ITERATION_DATA.append(GEN_THREAD_ITERATION_AUX)  # thread_iterator number
+
+        if MASTER_REQ_INFO:
+            GEN_THREAD_REQUEST.append("REQUEST")
+        else:
+            GEN_THREAD_REQUEST.append("IDLE")
+        GEN_THREAD_ITERATION_AUX += 1
+        WELDING_ITERATOR_WORKFLOW += 1
 
 
 def check_duplicate_timestamp_unused():
@@ -358,6 +373,8 @@ if __name__ == "__main__":
     WELDING_ITERATOR_WORKFLOW = 0
     THREAD_START_TIME = None
     THREAD_END_TIME = None
+    THREAD_DB_START_TIME = None
+    THREAD_DB_END_TIME = None
     WELDING_DATA = []
 
     # ------------------------------------
