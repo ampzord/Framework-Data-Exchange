@@ -12,10 +12,10 @@ NUMBER_GENERATED_POINTS_PER_CYCLE = [5000]
 TIME_TILL_REQUEST = [30]
 """
 
-NUMBER_CLIENTS = [10]
-NUMBER_ITERATIONS_TILL_WRITE = [5, 10]
-NUMBER_GENERATED_POINTS_PER_CYCLE = [2500]
-TIME_TILL_REQUEST = [5, 10, 15]
+NUMBER_CLIENTS = [5, 10, 15]
+NUMBER_ITERATIONS_TILL_WRITE = [5, 10, 15]
+NUMBER_GENERATED_POINTS_PER_CYCLE = [5000]
+TIME_TILL_REQUEST = [10, 20, 30]
 
 """
 NUMBER_CLIENTS = [5, 10, 15]
@@ -55,7 +55,7 @@ if __name__ == "__main__":
     # exit()
 
     init_logging_config()
-    for i in range(1):
+    for i in range(3):
         for number_cli in NUMBER_CLIENTS:
             for number_iter in NUMBER_ITERATIONS_TILL_WRITE:
                 for number_gen in NUMBER_GENERATED_POINTS_PER_CYCLE:
