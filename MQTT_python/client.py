@@ -38,7 +38,7 @@ WELDING_GEN_THREAD_TIMESTAMP = None  # added later
 GEN_THREAD_TIME_DATA = []  # time taken by thread
 GEN_THREAD_ITERATION_DATA = []  # thread iterator
 GEN_THREAD_REQUEST = []  # IDLE / REQUEST
-
+GEN_AUXILIAR_LIST = []
 GEN_THREAD_ITERATION_AUX = 1
 
 
@@ -163,34 +163,36 @@ def welding_workflow():
     while MACHINE_WORKFLOW_CYCLE:
         generate_data_thread = threading.Thread(target=welding_data_generation_simulation, args=(), daemon=True)
 
-        thread_start_time = time.perf_counter_ns()
+        THREAD_START_TIME = time.perf_counter_ns()
         generate_data_thread.start()
         generate_data_thread.join()
-        thread_end_time = time.perf_counter_ns()
+        THREAD_END_TIME = time.perf_counter_ns()
+        GEN_AUXILIAR_LIST.append(THREAD_END_TIME - THREAD_START_TIME)
 
         ITERATOR_GENERATE_DATA += 1
 
         if ITERATOR_GENERATE_DATA >= NUMBER_ITERATIONS_TILL_WRITE:
             store_data_thread = threading.Thread(target=store_welding_generation_DB, args=(), daemon=True)
-            THREAD_DB_START_TIME = time.perf_counter_ns()
+            # THREAD_DB_START_TIME = time.perf_counter_ns()
             store_data_thread.start()
             store_data_thread.join()
-            THREAD_DB_END_TIME = time.perf_counter_ns()
+            # THREAD_DB_END_TIME = time.perf_counter_ns()
             extra = THREAD_DB_END_TIME - THREAD_DB_START_TIME
             ITERATOR_GENERATE_DATA = 0
+
+            GEN_THREAD_TIME_DATA.append(sum(GEN_AUXILIAR_LIST))  # thread_time
+            GEN_THREAD_ITERATION_DATA.append(GEN_THREAD_ITERATION_AUX)  # thread_iterator number
+            GEN_AUXILIAR_LIST.clear()
+
+            if MASTER_REQ_INFO:
+                GEN_THREAD_REQUEST.append("REQUEST")
+            else:
+                GEN_THREAD_REQUEST.append("IDLE")
 
         if WELDING_ITERATOR_WORKFLOW >= MAX_CYCLE_LIMIT-1:  # Problem of generating data and it not being saved MAX_CYCLE Limit vs NUMBERS_ITER
             # logging.info("Welding iterator workflow passed MAX_CYCLE_LIMIT of: " + str(MAX_CYCLE_LIMIT))
             MACHINE_WORKFLOW_CYCLE = False
 
-        GEN_THREAD_TIME_DATA.append((thread_end_time - thread_start_time) + extra)  # thread_time
-        extra = 0
-        GEN_THREAD_ITERATION_DATA.append(GEN_THREAD_ITERATION_AUX)  # thread_iterator number
-
-        if MASTER_REQ_INFO:
-            GEN_THREAD_REQUEST.append("REQUEST")
-        else:
-            GEN_THREAD_REQUEST.append("IDLE")
         GEN_THREAD_ITERATION_AUX += 1
         WELDING_ITERATOR_WORKFLOW += 1
 
@@ -389,7 +391,7 @@ if __name__ == "__main__":
     NUMBER_ITERATIONS_TILL_WRITE = int(sys.argv[2])
     NUMBER_GENERATED_POINTS_PER_CYCLE = int(sys.argv[3])
     SOLUTION_PATH = sys.argv[4]
-    MAX_CYCLE_LIMIT = 600
+    MAX_CYCLE_LIMIT = 250
 
     # Const Global Variables
     CLIENT_DB_NAME = 'client' + MACHINE_NUMBER + '_db'
@@ -422,13 +424,12 @@ if __name__ == "__main__":
     db.create_database(CLIENT_DB_NAME)
     # clear_clientDB_data()
 
-    welding_workflow_thread = threading.Thread(target=welding_workflow, args=(), daemon=True)
-    welding_workflow_thread.start()
-    # logging.debug("Thread ID, welding workflow: ", welding_workflow_thread.get_ident())
-
     # MQTT Protocol
     mqtt_client = mqtt.Client()
     mqtt_init(mqtt_client)
+
+    welding_workflow_thread = threading.Thread(target=welding_workflow, args=(), daemon=True)
+    welding_workflow_thread.start()
 
     mqtt_client.loop_start()
 

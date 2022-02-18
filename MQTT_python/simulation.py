@@ -6,10 +6,10 @@ import time
 import os
 
 
-NUMBER_CLIENTS = [10]
-NUMBER_ITERATIONS_TILL_WRITE = [10]
-NUMBER_GENERATED_POINTS_PER_CYCLE = [2500]
-TIME_TILL_REQUEST = [10]
+NUMBER_CLIENTS = [5, 10, 15]
+NUMBER_ITERATIONS_TILL_WRITE = [5]
+NUMBER_GENERATED_POINTS_PER_CYCLE = [5000]
+TIME_TILL_REQUEST = [20, 40, 60]
 
 
 """
@@ -49,12 +49,12 @@ def create_solution_directory(clients, number_iterations, number_generated, time
 
     return sol_path
 
+def alertSimulationFinished():
+    playsound('C:/Users/work/Documents/FEUP/MQTT_Project/MQTT_python/alert.wav')
 
 if __name__ == "__main__":
 
-    # proc2 = subprocess.call([sys.executable, 'cleanInfluxDB.py', str(30)], shell=True)
-
-    # exit()
+    proc2 = subprocess.call([sys.executable, 'cleanInfluxDB.py', str(30)], shell=True)
 
     init_logging_config()
     for i in range(2):
@@ -72,17 +72,17 @@ if __name__ == "__main__":
                                                      str(number_iter),
                                                      str(number_gen),
                                                      solutionPath,
-                                                     "DEBUG_MODE"],
+                                                     "INFO_MODE"],
                                                     shell=True)
                             processID.append(proc)
 
                         time.sleep(time_req)
-                        subprocess.call([sys.executable, 'master.py', str(number_cli), solutionPath, "DEBUG_MODE"],
+                        subprocess.call([sys.executable, 'master.py', str(number_cli), solutionPath, "INFO_MODE"],
                                         shell=True)
                         # proc.wait()
                         exit_codes = [p.wait() for p in processID]
                         # clean influxDBs
                         proc2 = subprocess.call([sys.executable, 'cleanInfluxDB.py', str(number_cli)], shell=True)
-                        print("Cleaned influxDB databases")
+                        # print("Cleaned influxDB databases")
                         processID.clear()
                         # proc2.wait()
