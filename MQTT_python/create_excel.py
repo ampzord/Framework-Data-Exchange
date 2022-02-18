@@ -1,9 +1,5 @@
 import os
 import re
-import math
-import numpy as np
-import npm as npm
-import pandas as pd
 import csv
 import numpy as np
 
@@ -56,29 +52,29 @@ if __name__ == "__main__":
     CLIENT_SOLUTION_LIST = []
     TIME_ELAPSED_THREAD = []  # 5 valores (cliente1), (cliente2)
     TIME_TO_FINISH = []  # 5 valores (master)
+    TIME_SEND_DATA_MASTER_LIST = []
     file_ending_client = ("1.log", "2.log", "3.log", "4.log", "5.log", "6.log", "7.log", "8.log", "9.log", "0.log")
 
     with open('solution.csv', 'w', encoding='UTF8', newline='') as f_csv:
         writer = csv.writer(f_csv)
-        header1 = ["PARAMETERS", "", "", "", "METRICS"]
-        header2 = ["", "", "", "", "Solution_Time", "", "Number_Welding_Values", "", "TIME_ELAPSED_OF_THREAD_CLIENT1", "",
-                   "TIME_ELAPSED_OF_THREAD_CLIENT2", "", "TIME_ELAPSED_OF_THREAD_CLIENT3", "", "TIME_ELAPSED_OF_THREAD_CLIENT4", "", "TIME_ELAPSED_OF_THREAD_CLIENT5", "",
-                   "TIME_ELAPSED_OF_THREAD_CLIENT6", "", "TIME_ELAPSED_OF_THREAD_CLIENT7", "", "TIME_ELAPSED_OF_THREAD_CLIENT8", "", "TIME_ELAPSED_OF_THREAD_CLIENT9", "",
-                   "TIME_ELAPSED_OF_THREAD_CLIENT10", "", "TIME_ELAPSED_OF_THREAD_CLIENT11", "", "TIME_ELAPSED_OF_THREAD_CLIENT12", "", "TIME_ELAPSED_OF_THREAD_CLIENT13", "",
-                   "TIME_ELAPSED_OF_THREAD_CLIENT14", "", "TIME_ELAPSED_OF_THREAD_CLIENT15", "",
-                   "TIME_ELAPSED_OF_THREAD_CLIENT16", "", "TIME_ELAPSED_OF_THREAD_CLIENT17", "",
-                   "TIME_ELAPSED_OF_THREAD_CLIENT18", "", "TIME_ELAPSED_OF_THREAD_CLIENT19", "",
-                   "TIME_ELAPSED_OF_THREAD_CLIENT20", "", "TIME_ELAPSED_OF_THREAD_CLIENT21", "",
-                   "TIME_ELAPSED_OF_THREAD_CLIENT22", "", "TIME_ELAPSED_OF_THREAD_CLIENT23", "",
-                   "TIME_ELAPSED_OF_THREAD_CLIENT24", "", "TIME_ELAPSED_OF_THREAD_CLIENT25", "",
-                   "TIME_ELAPSED_OF_THREAD_CLIENT26", "", "TIME_ELAPSED_OF_THREAD_CLIENT27", "",
-                   "TIME_ELAPSED_OF_THREAD_CLIENT28", "", "TIME_ELAPSED_OF_THREAD_CLIENT29", "",
-                   "TIME_ELAPSED_OF_THREAD_CLIENT30", "",]
-        header3 = ["CLIENTS", "ITERATIONS_TILL_WRITE", "GENERATED_POINTS_PER_CYCLE", "TIME_TILL_REQUEST", "Average", "Std_Deviation", "Average", "Std_Deviation", "Average", "Std_Deviation",
-                   "Average", "Std_Deviation", "Average", "Std_Deviation", "Average", "Std_Deviation", "Average", "Std_Deviation", "Average", "Std_Deviation", "Average", "Std_Deviation", "Average", "Std_Deviation", "Average", "Std_Deviation",
-                   "Average", "Std_Deviation", "Average", "Std_Deviation", "Average", "Std_Deviation", "Average", "Std_Deviation", "Average", "Std_Deviation", "Average", "Std_Deviation", "Average", "Std_Deviation", "Average", "Std_Deviation",
-                   "Average", "Std_Deviation","Average", "Std_Deviation","Average", "Std_Deviation","Average", "Std_Deviation","Average", "Std_Deviation","Average", "Std_Deviation","Average", "Std_Deviation","Average", "Std_Deviation"
-                   ,"Average", "Std_Deviation","Average", "Std_Deviation","Average", "Std_Deviation","Average", "Std_Deviation","Average", "Std_Deviation"]
+        header1 = ["PARAMETERS", "", "", ""]
+
+        for i in range(30):
+            header1.append("METRICS - CLIENT" + str(i+1))
+            header1.append("")
+
+        header2 = ["", "", "", ""]
+
+        for i in range(30):
+            header2.append("TIME_ELAPSED_OF_THREAD_CLIENT" + str(i+1))
+            header2.append("")
+
+        header3 = ["CLIENTS", "ITERATIONS_TILL_WRITE", "GENERATED_POINTS_PER_CYCLE", "TIME_TILL_REQUEST"]
+
+        for i in range(30):  # 30 + 2 from Master
+            header3.append("Average")
+            header3.append("Std_Deviation")
+
         writer.writerow(header1)
         writer.writerow(header2)
         writer.writerow(header3)
@@ -159,6 +155,11 @@ if __name__ == "__main__":
                             # CLIENT_ID
                             regex = re.compile(r"\bclient\d+")
                             CLIENT_ID = regex.findall(line)
+
+                        if "sent Data to Master in" in line:
+                            client_data_to_master = re.findall('{(.+?)}', line)
+                            TIME_SEND_DATA_MASTER_LIST.append(client_data_to_master)
+
                     f.close()
 
                     TIME_ELAPSED_THREAD_FLOAT = []
@@ -171,19 +172,24 @@ if __name__ == "__main__":
 
                     time_elapsed_value_std = np.std(TIME_ELAPSED_THREAD_FLOAT)
                     time_elapsed_value_std_decimal = float("{0:.3f}".format(time_elapsed_value_std))
-
                     CLIENT_SOLUTION_LIST.append(time_elapsed_value_std_decimal)
 
             # INFORMATION TO SEND TO .CSV
             parameters_divided = dir.split('_')  # PARAMETERS
             parameters_divided_fixed = '_'.join(parameters_divided)
 
-            # print("MASTER_SOL_LIST: ", MASTER_SOLUTION_LIST)
-            # print("CLIENT_SOL_LIST: ", CLIENT_SOLUTION_LIST)
-            # print("PARAMETERS_DIVIDED: ", parameters_divided)
-            # print("PARAMETERS_DIVIDED_FIXED: ", parameters_divided_fixed)
+            print("MASTER_SOL_LIST: ", MASTER_SOLUTION_LIST)
+            print("CLIENT_SOL_LIST: ", CLIENT_SOLUTION_LIST)
+            print("PARAMETERS_DIVIDED: ", parameters_divided)
+            print("PARAMETERS_DIVIDED_FIXED: ", parameters_divided_fixed)
 
-            SOLUTION_ROW_LIST = dir + "", "", "", "", "", "", "", ""
+            SOLUTION_ROW_LIST = parameters_divided_fixed + "", "", "", "" # + str(tuple(MASTER_SOLUTION_LIST)) + str(tuple(CLIENT_SOLUTION_LIST))
+
+            #convert tuple to list -> add list -> convert to tuple
+
+            # for item in MASTER_SOLUTION_LIST:
+            #    SOLUTION_ROW_LIST = list(SOLUTION_ROW_LIST)
+            #    SOLUTION_ROW_LIST.insert(len(SOLUTION_ROW_LIST), item)
 
             for item in CLIENT_SOLUTION_LIST:
                 SOLUTION_ROW_LIST = list(SOLUTION_ROW_LIST)
@@ -196,6 +202,7 @@ if __name__ == "__main__":
                 writer.writerow(SOLUTION_ROW_LIST)
 
             # RESET VARIABLES
+            TIME_SEND_DATA_MASTER_LIST = []
             SOLUTION_ROW_LIST = []
             TIME_TO_FINISH = []
             WELDING_VALUE_LIST = []
@@ -203,6 +210,7 @@ if __name__ == "__main__":
             MASTER_SOLUTION_LIST = []
             TIME_ELAPSED_THREAD = []
             TIME_ELAPSED_THREAD_FLOAT = []
+            TIME_SEND_DATA_MASTER_FLOAT = []
             new_list_float_avg = None
             CLIENT_ID = None
             MASTER_DONE = False

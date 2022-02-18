@@ -40,6 +40,7 @@ GEN_THREAD_ITERATION_DATA = []  # thread iterator
 GEN_THREAD_REQUEST = []  # IDLE / REQUEST
 GEN_THREAD_BOOLEAN_ACTIVE = False
 GEN_THREAD_ITERATION_AUX = 1
+GEN_AUXILIAR_LIST = []
 
 
 # -------------
@@ -136,7 +137,6 @@ def store_welding_generation_DB():
 
     logging.debug(CLIENT_ID + " stored the welding generated data in: %.5f seconds", welding_write_time_to_DB)
     WELDING_DATA.clear()
-    return welding_write_time_to_DB
 
 
 def welding_workflow():
@@ -147,15 +147,15 @@ def welding_workflow():
 
     extra = 0
     while MACHINE_WORKFLOW_CYCLE:
-
         generate_data_thread = threading.Thread(target=welding_data_generation_simulation, args=(), daemon=True)
         # thread_start_time = time.thread_time_ns()
         # thread_start_time = time.time_ns()
 
-        thread_start_time = time.perf_counter_ns()
+        THREAD_START_TIME = time.perf_counter_ns()
         generate_data_thread.start()
         generate_data_thread.join()
-        thread_end_time = time.perf_counter_ns()
+        THREAD_END_TIME = time.perf_counter_ns()
+        GEN_AUXILIAR_LIST.append(THREAD_END_TIME - THREAD_START_TIME)
 
         # thread_end_time = time.time_ns()
         ITERATOR_GENERATE_DATA += 1
@@ -163,25 +163,26 @@ def welding_workflow():
         if ITERATOR_GENERATE_DATA >= NUMBER_ITERATIONS_TILL_WRITE:
             # reset to 0 timestamp
             store_data_thread = threading.Thread(target=store_welding_generation_DB, args=(), daemon=True)
-            THREAD_DB_START_TIME = time.perf_counter_ns()
+            # THREAD_DB_START_TIME = time.perf_counter_ns()
             store_data_thread.start()
             store_data_thread.join()
-            THREAD_DB_END_TIME = time.perf_counter_ns()
-            extra = THREAD_DB_END_TIME - THREAD_DB_START_TIME
+            # THREAD_DB_END_TIME = time.perf_counter_ns()
             ITERATOR_GENERATE_DATA = 0
+
+            GEN_THREAD_TIME_DATA.append(sum(GEN_AUXILIAR_LIST))  # thread_time
+            GEN_THREAD_ITERATION_DATA.append(GEN_THREAD_ITERATION_AUX)  # thread_iterator number
+            GEN_AUXILIAR_LIST.clear()
+            # sum_of_generated_timestamps = 0
+
+            if MASTER_REQ_INFO:
+                GEN_THREAD_REQUEST.append("REQUEST")
+            else:
+                GEN_THREAD_REQUEST.append("IDLE")
 
         if WELDING_ITERATOR_WORKFLOW >= MAX_CYCLE_LIMIT-1:  # condition: max cycle % number generated == 0
             # logging.info("Welding iterator workflow passed MAX_CYCLE_LIMIT of: " + str(MAX_CYCLE_LIMIT))
             MACHINE_WORKFLOW_CYCLE = False
 
-        GEN_THREAD_TIME_DATA.append((thread_end_time - thread_start_time) + extra)  # thread_time
-        extra = 0
-        GEN_THREAD_ITERATION_DATA.append(GEN_THREAD_ITERATION_AUX)  # thread_iterator number
-
-        if MASTER_REQ_INFO:
-            GEN_THREAD_REQUEST.append("REQUEST")
-        else:
-            GEN_THREAD_REQUEST.append("IDLE")
         GEN_THREAD_ITERATION_AUX += 1
         WELDING_ITERATOR_WORKFLOW += 1
 
@@ -317,7 +318,7 @@ if __name__ == "__main__":
     NUMBER_ITERATIONS_TILL_WRITE = int(sys.argv[2])
     NUMBER_GENERATED_POINTS_PER_CYCLE = int(sys.argv[3])
     SOLUTION_PATH = sys.argv[4]
-    MAX_CYCLE_LIMIT = 600
+    MAX_CYCLE_LIMIT = 250
 
     # Const Global Variables
     CLIENT_DB_NAME = 'client' + MACHINE_NUMBER + '_db'
@@ -348,12 +349,12 @@ if __name__ == "__main__":
     db = InfluxDBClient('localhost', 8086, 'root', 'root', CLIENT_DB_NAME)
     db.create_database(CLIENT_DB_NAME)
 
-    welding_workflow_thread = threading.Thread(target=welding_workflow, args=(), daemon=True)
-    welding_workflow_thread.start()
-
     # MQTT Protocol
     mqtt_client = mqtt.Client()
     mqtt_init(mqtt_client)
+
+    welding_workflow_thread = threading.Thread(target=welding_workflow, args=(), daemon=True)
+    welding_workflow_thread.start()
 
     mqtt_client.publish(CLIENT_TOPIC, "WORKING", qos=0, retain=True)
 
