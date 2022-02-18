@@ -12,7 +12,6 @@ The communication between Master and its Clients is done through MQTT Protocol w
 # Standard Library
 import time
 import sys
-import os
 
 # 3rd Party Packages
 import paho.mqtt.client as mqtt
