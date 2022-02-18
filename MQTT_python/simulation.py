@@ -13,9 +13,9 @@ TIME_TILL_REQUEST = [30]
 """
 
 NUMBER_CLIENTS = [5, 10, 15]
-NUMBER_ITERATIONS_TILL_WRITE = [5, 10, 15]
-NUMBER_GENERATED_POINTS_PER_CYCLE = [2500]
-TIME_TILL_REQUEST = [10, 20]
+NUMBER_ITERATIONS_TILL_WRITE = [5]
+NUMBER_GENERATED_POINTS_PER_CYCLE = [5000]
+TIME_TILL_REQUEST = [20, 40, 60]
 
 """
 NUMBER_CLIENTS = [5, 10, 15]
@@ -47,12 +47,12 @@ def create_solution_directory(clients, number_iterations, number_generated, time
 
     return sol_path
 
+def alertSimulationFinished():
+    playsound('C:/Users/work/Documents/FEUP/MQTT_Project/MQTT_python/alert.wav')
 
 if __name__ == "__main__":
 
-    # proc2 = subprocess.call([sys.executable, 'cleanInfluxDB.py', str(15)], shell=True)
-
-    # exit()
+    proc2 = subprocess.call([sys.executable, 'cleanInfluxDB.py', str(15)], shell=True)
 
     init_logging_config()
     for i in range(5):
@@ -69,12 +69,12 @@ if __name__ == "__main__":
                                                      str(number_iter),
                                                      str(number_gen),
                                                      solutionPath,
-                                                    "DEBUG_MODE"],
+                                                    "INFO_MODE"],
                                                     shell=True)
                             processID.append(proc)
 
                         time.sleep(time_req)
-                        subprocess.call([sys.executable, 'master.py', str(number_cli), solutionPath, "DEBUG_MODE"], shell=True)
+                        subprocess.call([sys.executable, 'master.py', str(number_cli), solutionPath, "INFO_MODE"], shell=True)
                         exit_codes = [p.wait() for p in processID]
                         # clean influxDBs
                         proc2 = subprocess.call([sys.executable, 'cleanInfluxDB.py', str(number_cli)], shell=True)
