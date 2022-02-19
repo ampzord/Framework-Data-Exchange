@@ -5,10 +5,11 @@ import subprocess
 import time
 import os
 
+from playsound import playsound
 
 NUMBER_CLIENTS = [5, 10, 15]
 NUMBER_ITERATIONS_TILL_WRITE = [5]
-NUMBER_GENERATED_POINTS_PER_CYCLE = [5000]
+NUMBER_GENERATED_POINTS_PER_CYCLE = [10000]
 TIME_TILL_REQUEST = [20, 40, 60]
 
 
@@ -49,8 +50,10 @@ def create_solution_directory(clients, number_iterations, number_generated, time
 
     return sol_path
 
+
 def alertSimulationFinished():
     playsound('C:/Users/work/Documents/FEUP/MQTT_Project/MQTT_python/alert.wav')
+
 
 if __name__ == "__main__":
 

@@ -177,7 +177,6 @@ def welding_workflow():
             store_data_thread.start()
             store_data_thread.join()
             # THREAD_DB_END_TIME = time.perf_counter_ns()
-            extra = THREAD_DB_END_TIME - THREAD_DB_START_TIME
             ITERATOR_GENERATE_DATA = 0
 
             GEN_THREAD_TIME_DATA.append(sum(GEN_AUXILIAR_LIST))  # thread_time
