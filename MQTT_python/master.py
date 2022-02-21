@@ -195,6 +195,11 @@ def clientNumberHighestDivisor(clients):  # number of clients 5,10,15,20,25 ?
     concurrent_clients = highest_divisor  # 5
     solution_string = []
 
+    if highest_divisor == 1:
+        aux_clients = clients_per_grp
+        clients_per_grp = concurrent_clients
+        concurrent_clients = aux_clients
+
     # print("Concurrent clients:", concurrent_clients)
     # print("Clients per grp:", clients_per_grp)
     number_start = 1
