@@ -57,7 +57,7 @@ if __name__ == "__main__":
 
     with open('solution.csv', 'w', encoding='UTF8', newline='') as f_csv:
         writer = csv.writer(f_csv)
-        header1 = ["PARAMETERS", "", "", "", "METRICS - MASTER"]
+        header1 = ["PARAMETERS", "", "", "", "METRICS - MASTER", "", "", ""]
 
         for i in range(30):
             header1.append("METRICS - CLIENT" + str(i+1))
