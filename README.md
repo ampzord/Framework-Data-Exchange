@@ -7,3 +7,11 @@ This Project was developed to complement the Dissertation: __Framework for Intel
 - [MQTT](https://mqtt.org/)
 - [InfluxDB](https://www.influxdata.com/)
 - [Eclipse Mosquitto Broker](https://mosquitto.org/)
+
+## Requirements
+
+```sh
+pip install -r requirements.txt
+```
+
+## Usage
