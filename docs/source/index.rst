@@ -1,21 +1,18 @@
-.. MQTT Project documentation master file, created by
-   sphinx-quickstart on Fri Jul 30 15:59:29 2021.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
-Welcome to MQTT Project's documentation!
-========================================
+Welcome to Framework for Intelligent Data Exchange Documentation!
+==========================================================================
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
-   
-   modules
+   :caption: Source Files:
 
+   client
+   master
+   simulation
 
-Indices and tables
-==================
+.. toctree::
+   :maxdepth: 2
+   :caption: Utility Files:
 
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+   cleaninfluxDB
+   utils
+   create_csv
