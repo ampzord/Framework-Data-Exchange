@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>client &mdash; Framework for Intelligent Data Exchange in CPS 1.0 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> Framework for Intelligent Data Exchange in CPS
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Source Files:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../client.html">client.py</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../master.html">master.py</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../simulation.html">simulation.py</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Utility Files:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../cleaninfluxDB.html">clean_influxDB.py</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../utils.html">utils.py</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../create_csv.html">create_csv.py</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Framework for Intelligent Data Exchange in CPS</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="index.html">Module code</a> &raquo;</li>
+      <li>client</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for client</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Creates a Client on the MQTT Protocol to communicate with Master</span>
+
+<span class="sd">Client generates information to be sent to the Master when it&#39;s to be requested.</span>
+<span class="sd">The communication is done through the MQTT Protocol with InfluxDB.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="c1"># ------------------------------------------------------------------------------</span>
+
+<span class="c1"># Standard Library</span>
+<span class="kn">import</span> <span class="nn">random</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">threading</span>
+
+<span class="c1"># 3rd Party Packages</span>
+<span class="kn">import</span> <span class="nn">paho.mqtt.client</span> <span class="k">as</span> <span class="nn">mqtt</span>
+<span class="kn">from</span> <span class="nn">influxdb</span> <span class="kn">import</span> <span class="n">InfluxDBClient</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+
+<span class="c1"># Local Source</span>
+<span class="kn">from</span> <span class="nn">utils</span> <span class="kn">import</span> <span class="o">*</span>
+
+<span class="n">__author__</span> <span class="o">=</span> <span class="s2">&quot;António Pereira&quot;</span>
+<span class="n">__email__</span> <span class="o">=</span> <span class="s2">&quot;antonio_m_sp@hotmail.com&quot;</span>
+<span class="n">__status__</span> <span class="o">=</span> <span class="s2">&quot;Development&quot;</span>
+
+<span class="c1"># ------------------------------------------------------------------------------</span>
+
+<div class="viewcode-block" id="mathematical_calculation"><a class="viewcode-back" href="../client.html#client.mathematical_calculation">[docs]</a><span class="k">def</span> <span class="nf">mathematical_calculation</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculation of PI using Leibniz&#39;s formula</span>
+
+<span class="sd">    Objective of this function is to aid in adding cost to the generate data thread used by Client.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">denominator</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">pi</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1000000</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">i</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">pi</span> <span class="o">+=</span> <span class="mi">4</span> <span class="o">/</span> <span class="n">denominator</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">pi</span> <span class="o">-=</span> <span class="mi">4</span> <span class="o">/</span> <span class="n">denominator</span>
+
+        <span class="n">denominator</span> <span class="o">+=</span> <span class="mi">2</span>
+    <span class="k">return</span> <span class="n">pi</span></div>
+
+
+<div class="viewcode-block" id="save_thread_timestamp_intervals_csv"><a class="viewcode-back" href="../client.html#client.save_thread_timestamp_intervals_csv">[docs]</a><span class="k">def</span> <span class="nf">save_thread_timestamp_intervals_csv</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Writes the saved elapsed timestamp from generating_data() thread to clientID.csv</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">tmp_dict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;Thread_Iteration&#39;</span><span class="p">:</span> <span class="n">GEN_THREAD_ITERATION_DATA</span><span class="p">,</span>
+                <span class="s1">&#39;Time_Elapsed&#39;</span><span class="p">:</span> <span class="n">GEN_THREAD_TIME_DATA</span><span class="p">,</span>
+                <span class="s1">&#39;MASTER_REQUEST&#39;</span><span class="p">:</span> <span class="n">GEN_THREAD_REQUEST</span><span class="p">}</span>
+
+    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">tmp_dict</span><span class="p">)</span>
+    <span class="n">sum_timestamps</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">GEN_THREAD_TIME_DATA</span><span class="p">)</span> <span class="o">*</span> <span class="nb">pow</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="o">-</span><span class="mi">9</span><span class="p">)</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">CLIENT_ID</span> <span class="o">+</span> <span class="s2">&quot; - Solution time adding all time_elapsed of thread: {</span><span class="si">%.5f</span><span class="s2">} seconds&quot;</span><span class="p">,</span> <span class="n">sum_timestamps</span><span class="p">)</span>
+    <span class="n">timestr</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y%m</span><span class="si">%d</span><span class="s2">-%H%M%S&quot;</span><span class="p">)</span>
+    <span class="n">df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">SOLUTION_PATH</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\\</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="n">CLIENT_ID</span> <span class="o">+</span> <span class="s1">&#39;_thread_time_elapsed_&#39;</span> <span class="o">+</span> <span class="n">timestr</span> <span class="o">+</span> <span class="s1">&#39;.csv&#39;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="welding_data_generation_simulation"><a class="viewcode-back" href="../client.html#client.welding_data_generation_simulation">[docs]</a><span class="k">def</span> <span class="nf">welding_data_generation_simulation</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generates the welding values with its assigned timestamps to be inserted in the DB.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">global</span> <span class="n">WELDING_DATA</span><span class="p">,</span> <span class="n">GEN_THREAD_TIME_DATA</span><span class="p">,</span> <span class="n">GEN_THREAD_ITERATION_AUX</span><span class="p">,</span> <span class="n">GEN_THREAD_REQUEST</span><span class="p">,</span> <span class="n">THREAD_START_TIME</span><span class="p">,</span> <span class="n">THREAD_END_TIME</span><span class="p">,</span> <span class="n">GEN_AUXILIAR_LIST</span>
+    <span class="c1"># thread_start_time = time.thread_time_ns()</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Welding Simulator Working...&quot;</span><span class="p">)</span>
+    <span class="n">measurement_name</span> <span class="o">=</span> <span class="s2">&quot;weldingEvents&quot;</span>
+    <span class="n">mathematical_calculation</span><span class="p">()</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">NUMBER_GENERATED_POINTS_PER_CYCLE</span><span class="p">):</span>
+        <span class="n">welding_value</span> <span class="o">=</span> <span class="nb">format</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">30</span><span class="p">),</span> <span class="mi">4</span><span class="p">))</span>
+        <span class="n">uniqueID</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">time_now_temp</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time_ns</span><span class="p">()</span>
+        <span class="n">WELDING_DATA</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{measurement}</span><span class="s2">,client=</span><span class="si">{client}</span><span class="s2">,uniqueID=</span><span class="si">{uniqueID}</span><span class="s2"> welding_value=</span><span class="si">{welding_value}</span><span class="s2"> </span><span class="si">{timestamp}</span><span class="s2">&quot;</span>
+                            <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">measurement</span><span class="o">=</span><span class="n">measurement_name</span><span class="p">,</span>
+                                    <span class="n">client</span><span class="o">=</span><span class="n">CLIENT_ID</span><span class="p">,</span>
+                                    <span class="n">uniqueID</span><span class="o">=</span><span class="n">uniqueID</span><span class="p">,</span>
+                                    <span class="n">welding_value</span><span class="o">=</span><span class="n">welding_value</span><span class="p">,</span>
+                                    <span class="n">timestamp</span><span class="o">=</span><span class="n">time_now_temp</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="store_welding_generation_DB"><a class="viewcode-back" href="../client.html#client.store_welding_generation_DB">[docs]</a><span class="k">def</span> <span class="nf">store_welding_generation_DB</span><span class="p">(</span><span class="n">new_counter</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Writes the generated information to the client&#39;s DB.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">global</span> <span class="n">WELDING_DATA</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Storing generated welding data to DB...&quot;</span><span class="p">)</span>
+
+    <span class="n">client_write_start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
+    <span class="n">db</span><span class="o">.</span><span class="n">write_points</span><span class="p">(</span><span class="n">WELDING_DATA</span><span class="p">,</span> <span class="n">database</span><span class="o">=</span><span class="n">CLIENT_DB_NAME</span><span class="p">,</span> <span class="n">time_precision</span><span class="o">=</span><span class="s1">&#39;n&#39;</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">10000</span><span class="p">,</span>
+                    <span class="n">protocol</span><span class="o">=</span><span class="s2">&quot;line&quot;</span><span class="p">)</span>  <span class="c1"># try batch_size=10000</span>
+    <span class="n">client_write_end_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
+    <span class="n">welding_write_time_to_DB</span> <span class="o">=</span> <span class="n">client_write_end_time</span> <span class="o">-</span> <span class="n">client_write_start_time</span>
+
+    <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">CLIENT_ID</span> <span class="o">+</span> <span class="s2">&quot; stored the welding generated data in: </span><span class="si">%.5f</span><span class="s2"> seconds&quot;</span><span class="p">,</span> <span class="n">welding_write_time_to_DB</span><span class="p">)</span>
+    <span class="n">WELDING_DATA</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="welding_workflow"><a class="viewcode-back" href="../client.html#client.welding_workflow">[docs]</a><span class="k">def</span> <span class="nf">welding_workflow</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Thread in charge of the generate data generation loop</span>
+
+<span class="sd">    Runs the welding data generation function several times before writing the all the generated data through store welding generation thread.</span>
+<span class="sd">    Loop of program ends when MAX_CYCLE_LIMIT is reached.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Starting Welding Workflow Cycle Thread...&quot;</span><span class="p">)</span>
+
+    <span class="k">global</span> <span class="n">MACHINE_WORKFLOW_CYCLE</span><span class="p">,</span> <span class="n">ITERATOR_GENERATE_DATA</span><span class="p">,</span> <span class="n">THREAD_START_TIME</span><span class="p">,</span> <span class="n">THREAD_END_TIME</span><span class="p">,</span> <span class="n">WELDING_ITERATOR_WORKFLOW</span><span class="p">,</span> <span class="n">GEN_THREAD_ITERATION_AUX</span><span class="p">,</span> <span class="n">THREAD_DB_START_TIME</span><span class="p">,</span> <span class="n">THREAD_DB_END_TIME</span><span class="p">,</span> <span class="n">FIRST_ITERATION_WORKFLOW</span>
+
+    <span class="n">new_counter</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">while</span> <span class="n">MACHINE_WORKFLOW_CYCLE</span><span class="p">:</span>
+        <span class="n">generate_data_thread</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">welding_data_generation_simulation</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(),</span> <span class="n">daemon</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="n">THREAD_START_TIME</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter_ns</span><span class="p">()</span>
+        <span class="n">generate_data_thread</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+        <span class="n">generate_data_thread</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
+        <span class="n">THREAD_END_TIME</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter_ns</span><span class="p">()</span>
+        <span class="n">GEN_AUXILIAR_LIST</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">THREAD_END_TIME</span> <span class="o">-</span> <span class="n">THREAD_START_TIME</span><span class="p">)</span>
+
+        <span class="n">ITERATOR_GENERATE_DATA</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="k">if</span> <span class="n">ITERATOR_GENERATE_DATA</span> <span class="o">&gt;=</span> <span class="n">NUMBER_ITERATIONS_TILL_WRITE</span><span class="p">:</span>
+            <span class="n">new_counter</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">store_data_thread</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">store_welding_generation_DB</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">new_counter</span><span class="p">,),</span> <span class="n">daemon</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">store_data_thread</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+            <span class="n">store_data_thread</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
+            <span class="n">ITERATOR_GENERATE_DATA</span> <span class="o">=</span> <span class="mi">0</span>
+
+            <span class="n">GEN_THREAD_TIME_DATA</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">GEN_AUXILIAR_LIST</span><span class="p">))</span>  <span class="c1"># thread_time</span>
+            <span class="n">GEN_THREAD_ITERATION_DATA</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">GEN_THREAD_ITERATION_AUX</span><span class="p">)</span>  <span class="c1"># thread_iterator number</span>
+            <span class="n">GEN_AUXILIAR_LIST</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+
+            <span class="k">if</span> <span class="n">MASTER_REQ_INFO</span><span class="p">:</span>
+                <span class="n">GEN_THREAD_REQUEST</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;REQUEST&quot;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">GEN_THREAD_REQUEST</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;IDLE&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">WELDING_ITERATOR_WORKFLOW</span> <span class="o">&gt;=</span> <span class="n">MAX_CYCLE_LIMIT</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+            <span class="n">MACHINE_WORKFLOW_CYCLE</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="n">GEN_THREAD_ITERATION_AUX</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">WELDING_ITERATOR_WORKFLOW</span> <span class="o">+=</span> <span class="mi">1</span></div>
+
+
+<div class="viewcode-block" id="check_duplicate_timestamp_unused"><a class="viewcode-back" href="../client.html#client.check_duplicate_timestamp_unused">[docs]</a><span class="k">def</span> <span class="nf">check_duplicate_timestamp_unused</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Checks if client&#39;s DB has any duplicate timestamp value</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">data</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">&quot;SELECT * FROM weldingEvents;&quot;</span><span class="p">)</span>
+    <span class="c1"># print(&#39;Data raw: &#39;, data.raw)</span>
+    <span class="n">points</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get_points</span><span class="p">(</span><span class="n">tags</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;client&#39;</span><span class="p">:</span> <span class="n">CLIENT_ID</span><span class="p">})</span>
+    <span class="n">timestamp_list</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">point</span> <span class="ow">in</span> <span class="n">points</span><span class="p">:</span>
+        <span class="c1"># print(&quot;Time: {}, Welding value: {}&quot;.format(point[&#39;time&#39;], point[&#39;welding_value&#39;]))</span>
+        <span class="n">timestamp_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">point</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">])</span></div>
+
+
+<div class="viewcode-block" id="send_client_data_to_master"><a class="viewcode-back" href="../client.html#client.send_client_data_to_master">[docs]</a><span class="k">def</span> <span class="nf">send_client_data_to_master</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Send Client&#39;s DB data to Master&#39;s DB through influxDB</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Sending all data in </span><span class="si">%s</span><span class="s2"> to master_db&quot;</span><span class="p">,</span> <span class="n">CLIENT_DB_NAME</span><span class="p">)</span>
+    <span class="k">global</span> <span class="n">MASTER_REQ_INFO</span><span class="p">,</span> <span class="n">CLIENT_SENT_ALL_DATA</span>
+    <span class="n">db</span><span class="o">.</span><span class="n">switch_database</span><span class="p">(</span><span class="n">CLIENT_DB_NAME</span><span class="p">)</span>
+
+    <span class="n">client_write_start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
+    <span class="n">send_data</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s1">&#39;SELECT * INTO master_db..weldingEvents FROM weldingEvents GROUP BY *;&#39;</span><span class="p">)</span>
+    <span class="n">client_write_end_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
+
+    <span class="n">client_write_time_to_master</span> <span class="o">=</span> <span class="n">client_write_end_time</span> <span class="o">-</span> <span class="n">client_write_start_time</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">CLIENT_ID</span> <span class="o">+</span> <span class="s2">&quot; sent Data to Master in: {</span><span class="si">%.5f</span><span class="s2">} seconds</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">client_write_time_to_master</span><span class="p">)</span>
+
+    <span class="c1"># logging.info(&quot;Query Successful: &quot;, str(send_data))</span>
+
+    <span class="n">mqtt_client</span><span class="o">.</span><span class="n">publish</span><span class="p">(</span><span class="n">CLIENT_TOPIC</span><span class="p">,</span> <span class="s2">&quot;ALL_INFORMATION_SENT&quot;</span><span class="p">,</span> <span class="n">qos</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">retain</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="n">CLIENT_SENT_ALL_DATA</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">MASTER_REQ_INFO</span> <span class="o">=</span> <span class="kc">False</span></div>
+
+
+<div class="viewcode-block" id="clear_clientDB_data"><a class="viewcode-back" href="../client.html#client.clear_clientDB_data">[docs]</a><span class="k">def</span> <span class="nf">clear_clientDB_data</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Clears every value from client&#39;s DB.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">db</span><span class="o">.</span><span class="n">switch_database</span><span class="p">(</span><span class="n">CLIENT_DB_NAME</span><span class="p">)</span>
+    <span class="c1"># db.drop_database(CLIENT_DB_NAME)</span>
+
+    <span class="n">query</span> <span class="o">=</span> <span class="s2">&quot;DROP SERIES FROM weldingEvents WHERE client=$client;&quot;</span>
+    <span class="n">bind_params</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;client&#39;</span><span class="p">:</span> <span class="n">CLIENT_ID</span><span class="p">}</span>
+    <span class="c1"># logging.info(&quot;Starting to clean client DB..&quot;)</span>
+    <span class="n">deleted_data</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">bind_params</span><span class="o">=</span><span class="n">bind_params</span><span class="p">)</span></div>
+    <span class="c1"># logging.info(&quot;Deleted data query: &quot;, deleted_data)</span>
+    <span class="c1"># logging.info(&quot;Deleted client DB..&quot;)</span>
+
+
+<div class="viewcode-block" id="influxDB_terminate"><a class="viewcode-back" href="../client.html#client.influxDB_terminate">[docs]</a><span class="k">def</span> <span class="nf">influxDB_terminate</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Exit functions relative to influx database</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">db</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="init_logging_config"><a class="viewcode-back" href="../client.html#client.init_logging_config">[docs]</a><span class="k">def</span> <span class="nf">init_logging_config</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Creates the logging file for the current clientID file in logs folder</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">logging</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">handlers</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">if</span> <span class="s1">&#39;DEBUG_MODE&#39;</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">:</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="n">SOLUTION_PATH</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\\</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="n">CLIENT_ID</span> <span class="o">+</span> <span class="s1">&#39;.log&#39;</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">%(asctime)s</span><span class="s1"> : </span><span class="si">%(levelname)s</span><span class="s1"> : </span><span class="si">%(message)s</span><span class="s1">&#39;</span><span class="p">,</span>
+                            <span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">,</span> <span class="n">filemode</span><span class="o">=</span><span class="s1">&#39;a&#39;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="n">SOLUTION_PATH</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\\</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="n">CLIENT_ID</span> <span class="o">+</span> <span class="s1">&#39;.log&#39;</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">%(asctime)s</span><span class="s1"> : </span><span class="si">%(levelname)s</span><span class="s1"> : </span><span class="si">%(message)s</span><span class="s1">&#39;</span><span class="p">,</span>
+                            <span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">,</span> <span class="n">filemode</span><span class="o">=</span><span class="s1">&#39;a&#39;</span><span class="p">)</span>
+
+    <span class="c1"># set up logging to console</span>
+    <span class="n">console</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">StreamHandler</span><span class="p">()</span>
+    <span class="n">console</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+
+    <span class="c1"># set a format which is simpler for console use</span>
+    <span class="n">formatter</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">Formatter</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%(asctime)s</span><span class="s1"> : &#39;</span> <span class="o">+</span> <span class="n">SOLUTION_PATH</span> <span class="o">+</span> <span class="s1">&#39; : </span><span class="si">%(levelname)s</span><span class="s1"> : </span><span class="si">%(message)s</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="n">console</span><span class="o">.</span><span class="n">setFormatter</span><span class="p">(</span><span class="n">formatter</span><span class="p">)</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">addHandler</span><span class="p">(</span><span class="n">console</span><span class="p">)</span></div>
+
+
+<span class="c1"># MQTT Protocols</span>
+
+
+<div class="viewcode-block" id="on_connect"><a class="viewcode-back" href="../client.html#client.on_connect">[docs]</a><span class="k">def</span> <span class="nf">on_connect</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">userdata</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">return_code</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    MQTT connect protocol</span>
+
+<span class="sd">    @param client:</span>
+<span class="sd">        the client instance for this callback</span>
+<span class="sd">    @param userdata:</span>
+<span class="sd">        the private user data as set in Client() or userdata_set()</span>
+<span class="sd">    @param message:</span>
+<span class="sd">        response message sent by the broker</span>
+<span class="sd">    @param return_code:</span>
+<span class="sd">        the connection result\n</span>
+<span class="sd">        0: Connection successful\n</span>
+<span class="sd">        1: Connection refused – incorrect protocol version\n</span>
+<span class="sd">        2: Connection refused – invalid client identifier\n</span>
+<span class="sd">        3: Connection refused – server unavailable\n</span>
+<span class="sd">        4: Connection refused – bad username or password\n</span>
+<span class="sd">        5: Connection refused – not authorised\n</span>
+<span class="sd">        6-255: Currently unused.\n</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">return_code</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">CLIENT_ID</span> <span class="o">+</span> <span class="s2">&quot; - Error Connecting, Error Code: &quot;</span><span class="p">,</span> <span class="n">return_code</span><span class="p">)</span>
+        <span class="n">client</span><span class="o">.</span><span class="n">reconnect</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">CLIENT_ID</span> <span class="o">+</span> <span class="s2">&quot; - Successfully Connected to Broker.</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">client</span><span class="o">.</span><span class="n">subscribe</span><span class="p">(</span><span class="s2">&quot;topic/simulation/clients/#&quot;</span><span class="p">)</span>  <span class="c1"># subscribes to every topic of clients including itself</span>
+        <span class="n">client</span><span class="o">.</span><span class="n">subscribe</span><span class="p">(</span><span class="s2">&quot;topic/simulation/master&quot;</span><span class="p">,</span> <span class="n">qos</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="on_disconnect"><a class="viewcode-back" href="../client.html#client.on_disconnect">[docs]</a><span class="k">def</span> <span class="nf">on_disconnect</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">userdata</span><span class="p">,</span> <span class="n">rc</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Logs if any disconnect happened during execution of the program</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> is disconnecting with reason: </span><span class="si">%s</span><span class="s2"> &quot;</span><span class="p">,</span> <span class="n">CLIENT_ID</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">rc</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="on_message"><a class="viewcode-back" href="../client.html#client.on_message">[docs]</a><span class="k">def</span> <span class="nf">on_message</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">userdata</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Receives the messages that are published through the broker</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">message</span><span class="o">.</span><span class="n">topic</span> <span class="o">==</span> <span class="s2">&quot;topic/simulation/master&quot;</span><span class="p">:</span>
+        <span class="n">decoded_message</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">message</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">))</span>
+        <span class="k">global</span> <span class="n">MACHINE_WORKFLOW_CYCLE</span><span class="p">,</span> <span class="n">MASTER_REQ_INFO</span>
+
+        <span class="k">if</span> <span class="n">decoded_message</span> <span class="o">==</span> <span class="s2">&quot;GET_INFORMATION&quot;</span><span class="p">:</span>
+            <span class="n">mqtt_protocol_print</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+            <span class="n">MASTER_REQ_INFO</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="k">elif</span> <span class="n">decoded_message</span> <span class="o">==</span> <span class="s2">&quot;DATA_RECEIVED_FROM_&quot;</span> <span class="o">+</span> <span class="n">CLIENT_ID</span><span class="p">:</span>
+            <span class="n">mqtt_protocol_print</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+            <span class="k">pass</span>
+
+        <span class="k">elif</span> <span class="n">decoded_message</span> <span class="o">==</span> <span class="s2">&quot;REQUEST_FINISHED&quot;</span><span class="p">:</span>
+            <span class="n">mqtt_protocol_print</span><span class="p">(</span><span class="n">message</span><span class="p">)</span></div>
+            <span class="c1"># MACHINE_WORKFLOW_CYCLE = False</span>
+
+
+<div class="viewcode-block" id="mqtt_init"><a class="viewcode-back" href="../client.html#client.mqtt_init">[docs]</a><span class="k">def</span> <span class="nf">mqtt_init</span><span class="p">(</span><span class="n">client</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Connects to Broker and initializes protocols</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># broker_address = &quot;broker.hivemq.com&quot;</span>
+    <span class="n">broker_address</span> <span class="o">=</span> <span class="s2">&quot;localhost&quot;</span>
+    <span class="n">broker_port</span> <span class="o">=</span> <span class="mi">1883</span>
+
+    <span class="n">client</span><span class="o">.</span><span class="n">on_connect</span> <span class="o">=</span> <span class="n">on_connect</span>
+    <span class="n">client</span><span class="o">.</span><span class="n">on_message</span> <span class="o">=</span> <span class="n">on_message</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">client</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">broker_address</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="n">broker_port</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">ConnectionError</span><span class="p">:</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Error connecting to Broker: </span><span class="si">%s</span><span class="s2">, on Port: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">broker_address</span><span class="p">,</span> <span class="n">broker_port</span><span class="p">))</span>
+        <span class="n">client</span><span class="o">.</span><span class="n">reconnect</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="mqtt_terminate"><a class="viewcode-back" href="../client.html#client.mqtt_terminate">[docs]</a><span class="k">def</span> <span class="nf">mqtt_terminate</span><span class="p">(</span><span class="n">client</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calls the terminated functions of Client related to MQTT protocol</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">client</span><span class="o">.</span><span class="n">disconnect</span><span class="p">()</span>
+    <span class="n">client</span><span class="o">.</span><span class="n">loop_stop</span><span class="p">()</span></div>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+
+    <span class="c1"># Arguments</span>
+    <span class="n">MACHINE_NUMBER</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">NUMBER_ITERATIONS_TILL_WRITE</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+    <span class="n">NUMBER_GENERATED_POINTS_PER_CYCLE</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span>
+    <span class="n">SOLUTION_PATH</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span>
+    <span class="n">MAX_CYCLE_LIMIT</span> <span class="o">=</span> <span class="mi">250</span>
+
+    <span class="c1"># Const Global Variables</span>
+    <span class="n">CLIENT_DB_NAME</span> <span class="o">=</span> <span class="s1">&#39;client&#39;</span> <span class="o">+</span> <span class="n">MACHINE_NUMBER</span> <span class="o">+</span> <span class="s1">&#39;_db&#39;</span>
+    <span class="n">CLIENT_ID</span> <span class="o">=</span> <span class="s1">&#39;client&#39;</span> <span class="o">+</span> <span class="n">MACHINE_NUMBER</span>
+    <span class="n">CLIENT_TOPIC</span> <span class="o">=</span> <span class="s2">&quot;topic/simulation/clients/&quot;</span> <span class="o">+</span> <span class="n">CLIENT_ID</span>
+
+    <span class="c1"># Boolean Global Variables</span>
+    <span class="n">MACHINE_WORKFLOW_CYCLE</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">CLIENT_SENT_ALL_DATA</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">MASTER_REQ_INFO</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="c1"># Global Variables</span>
+    <span class="n">ITERATOR_GENERATE_DATA</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">WELDING_ITERATOR_WORKFLOW</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">THREAD_START_TIME</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">THREAD_END_TIME</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">THREAD_DB_START_TIME</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">THREAD_DB_END_TIME</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">WELDING_DATA</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">FIRST_ITERATION_WORKFLOW</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="n">GEN_THREAD_TIME_DATA</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># time taken by thread</span>
+    <span class="n">GEN_THREAD_ITERATION_DATA</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># thread iterator</span>
+    <span class="n">GEN_THREAD_REQUEST</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># IDLE / REQUEST</span>
+    <span class="n">GEN_AUXILIAR_LIST</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="n">GEN_THREAD_ITERATION_AUX</span> <span class="o">=</span> <span class="mi">1</span>
+
+    <span class="c1"># ------------------------------------</span>
+
+    <span class="c1"># Logging Configuration</span>
+    <span class="n">init_logging_config</span><span class="p">()</span>
+
+    <span class="c1"># InfluxDB</span>
+    <span class="n">db</span> <span class="o">=</span> <span class="n">InfluxDBClient</span><span class="p">(</span><span class="s1">&#39;localhost&#39;</span><span class="p">,</span> <span class="mi">8086</span><span class="p">,</span> <span class="s1">&#39;root&#39;</span><span class="p">,</span> <span class="s1">&#39;root&#39;</span><span class="p">,</span> <span class="n">CLIENT_DB_NAME</span><span class="p">)</span>
+    <span class="n">db</span><span class="o">.</span><span class="n">create_database</span><span class="p">(</span><span class="n">CLIENT_DB_NAME</span><span class="p">)</span>
+
+    <span class="c1"># MQTT Protocol</span>
+    <span class="n">mqtt_client</span> <span class="o">=</span> <span class="n">mqtt</span><span class="o">.</span><span class="n">Client</span><span class="p">()</span>
+    <span class="n">mqtt_init</span><span class="p">(</span><span class="n">mqtt_client</span><span class="p">)</span>
+
+    <span class="n">welding_workflow_thread</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">welding_workflow</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(),</span> <span class="n">daemon</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">welding_workflow_thread</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+
+    <span class="n">mqtt_client</span><span class="o">.</span><span class="n">loop_start</span><span class="p">()</span>
+
+    <span class="n">mqtt_client</span><span class="o">.</span><span class="n">publish</span><span class="p">(</span><span class="n">CLIENT_TOPIC</span><span class="p">,</span> <span class="s2">&quot;WORKING&quot;</span><span class="p">,</span> <span class="n">qos</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">retain</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">while</span> <span class="ow">not</span> <span class="n">MASTER_REQ_INFO</span><span class="p">:</span>
+        <span class="k">pass</span>
+
+    <span class="n">mqtt_client</span><span class="o">.</span><span class="n">publish</span><span class="p">(</span><span class="n">CLIENT_TOPIC</span><span class="p">,</span> <span class="s2">&quot;SENDING_DATA&quot;</span><span class="p">,</span> <span class="n">qos</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">retain</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="n">send_data_thread</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">send_client_data_to_master</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(),</span> <span class="n">daemon</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">send_data_thread</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+
+    <span class="k">while</span> <span class="ow">not</span> <span class="n">CLIENT_SENT_ALL_DATA</span><span class="p">:</span>
+        <span class="k">pass</span>
+
+    <span class="k">while</span> <span class="n">MACHINE_WORKFLOW_CYCLE</span><span class="p">:</span>
+        <span class="k">pass</span>
+
+    <span class="c1"># Exit functions</span>
+    <span class="n">save_thread_timestamp_intervals_csv</span><span class="p">()</span>
+    <span class="n">influxDB_terminate</span><span class="p">()</span>
+    <span class="n">mqtt_terminate</span><span class="p">(</span><span class="n">mqtt_client</span><span class="p">)</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, António Pereira.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

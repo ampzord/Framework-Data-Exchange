@@ -2,7 +2,6 @@
 MQTT_python/Master/.idea/
 MQTT_python/Client/.idea/
 MQTT_python/.idea/
-MQTT_python/docs/build
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

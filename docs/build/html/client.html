@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>client.py &mdash; Framework for Intelligent Data Exchange in CPS 1.0 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="master.py" href="master.html" />
+    <link rel="prev" title="Welcome to Framework for Intelligent Data Exchange Documentation!" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="index.html" class="icon icon-home"> Framework for Intelligent Data Exchange in CPS
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Source Files:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">client.py</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="master.html">master.py</a></li>
+<li class="toctree-l1"><a class="reference internal" href="simulation.html">simulation.py</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Utility Files:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="cleaninfluxDB.html">clean_influxDB.py</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utils.html">utils.py</a></li>
+<li class="toctree-l1"><a class="reference internal" href="create_csv.html">create_csv.py</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Framework for Intelligent Data Exchange in CPS</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>client.py</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/client.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="client-py">
+<h1>client.py<a class="headerlink" href="#client-py" title="Permalink to this headline"></a></h1>
+<div class="toctree-wrapper compound">
+</div>
+<span class="target" id="module-client"></span><p>Creates a Client on the MQTT Protocol to communicate with Master</p>
+<p>Client generates information to be sent to the Master when it’s to be requested.
+The communication is done through the MQTT Protocol with InfluxDB.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="client.check_duplicate_timestamp_unused">
+<span class="sig-prename descclassname"><span class="pre">client.</span></span><span class="sig-name descname"><span class="pre">check_duplicate_timestamp_unused</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/client.html#check_duplicate_timestamp_unused"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#client.check_duplicate_timestamp_unused" title="Permalink to this definition"></a></dt>
+<dd><p>Checks if client’s DB has any duplicate timestamp value</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="client.clear_clientDB_data">
+<span class="sig-prename descclassname"><span class="pre">client.</span></span><span class="sig-name descname"><span class="pre">clear_clientDB_data</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/client.html#clear_clientDB_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#client.clear_clientDB_data" title="Permalink to this definition"></a></dt>
+<dd><p>Clears every value from client’s DB.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="client.influxDB_terminate">
+<span class="sig-prename descclassname"><span class="pre">client.</span></span><span class="sig-name descname"><span class="pre">influxDB_terminate</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/client.html#influxDB_terminate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#client.influxDB_terminate" title="Permalink to this definition"></a></dt>
+<dd><p>Exit functions relative to influx database</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="client.init_logging_config">
+<span class="sig-prename descclassname"><span class="pre">client.</span></span><span class="sig-name descname"><span class="pre">init_logging_config</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/client.html#init_logging_config"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#client.init_logging_config" title="Permalink to this definition"></a></dt>
+<dd><p>Creates the logging file for the current clientID file in logs folder</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="client.mathematical_calculation">
+<span class="sig-prename descclassname"><span class="pre">client.</span></span><span class="sig-name descname"><span class="pre">mathematical_calculation</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/client.html#mathematical_calculation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#client.mathematical_calculation" title="Permalink to this definition"></a></dt>
+<dd><p>Calculation of PI using Leibniz’s formula</p>
+<p>Objective of this function is to aid in adding cost to the generate data thread used by Client.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="client.mqtt_init">
+<span class="sig-prename descclassname"><span class="pre">client.</span></span><span class="sig-name descname"><span class="pre">mqtt_init</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">client</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/client.html#mqtt_init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#client.mqtt_init" title="Permalink to this definition"></a></dt>
+<dd><p>Connects to Broker and initializes protocols</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="client.mqtt_terminate">
+<span class="sig-prename descclassname"><span class="pre">client.</span></span><span class="sig-name descname"><span class="pre">mqtt_terminate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">client</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/client.html#mqtt_terminate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#client.mqtt_terminate" title="Permalink to this definition"></a></dt>
+<dd><p>Calls the terminated functions of Client related to MQTT protocol</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="client.on_connect">
+<span class="sig-prename descclassname"><span class="pre">client.</span></span><span class="sig-name descname"><span class="pre">on_connect</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">client</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">userdata</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">message</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_code</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/client.html#on_connect"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#client.on_connect" title="Permalink to this definition"></a></dt>
+<dd><p>MQTT connect protocol</p>
+<dl>
+<dt>&#64;param client:</dt><dd><p>the client instance for this callback</p>
+</dd>
+<dt>&#64;param userdata:</dt><dd><p>the private user data as set in Client() or userdata_set()</p>
+</dd>
+<dt>&#64;param message:</dt><dd><p>response message sent by the broker</p>
+</dd>
+<dt>&#64;param return_code:</dt><dd><p>the connection result</p>
+<p>0: Connection successful</p>
+<p>1: Connection refused – incorrect protocol version</p>
+<p>2: Connection refused – invalid client identifier</p>
+<p>3: Connection refused – server unavailable</p>
+<p>4: Connection refused – bad username or password</p>
+<p>5: Connection refused – not authorised</p>
+<p>6-255: Currently unused.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="client.on_disconnect">
+<span class="sig-prename descclassname"><span class="pre">client.</span></span><span class="sig-name descname"><span class="pre">on_disconnect</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">client</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">userdata</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rc</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/client.html#on_disconnect"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#client.on_disconnect" title="Permalink to this definition"></a></dt>
+<dd><p>Logs if any disconnect happened during execution of the program</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="client.on_message">
+<span class="sig-prename descclassname"><span class="pre">client.</span></span><span class="sig-name descname"><span class="pre">on_message</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">client</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">userdata</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">message</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/client.html#on_message"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#client.on_message" title="Permalink to this definition"></a></dt>
+<dd><p>Receives the messages that are published through the broker</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="client.save_thread_timestamp_intervals_csv">
+<span class="sig-prename descclassname"><span class="pre">client.</span></span><span class="sig-name descname"><span class="pre">save_thread_timestamp_intervals_csv</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/client.html#save_thread_timestamp_intervals_csv"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#client.save_thread_timestamp_intervals_csv" title="Permalink to this definition"></a></dt>
+<dd><p>Writes the saved elapsed timestamp from generating_data() thread to clientID.csv</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="client.send_client_data_to_master">
+<span class="sig-prename descclassname"><span class="pre">client.</span></span><span class="sig-name descname"><span class="pre">send_client_data_to_master</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/client.html#send_client_data_to_master"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#client.send_client_data_to_master" title="Permalink to this definition"></a></dt>
+<dd><p>Send Client’s DB data to Master’s DB through influxDB</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="client.store_welding_generation_DB">
+<span class="sig-prename descclassname"><span class="pre">client.</span></span><span class="sig-name descname"><span class="pre">store_welding_generation_DB</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">new_counter</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/client.html#store_welding_generation_DB"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#client.store_welding_generation_DB" title="Permalink to this definition"></a></dt>
+<dd><p>Writes the generated information to the client’s DB.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="client.welding_data_generation_simulation">
+<span class="sig-prename descclassname"><span class="pre">client.</span></span><span class="sig-name descname"><span class="pre">welding_data_generation_simulation</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/client.html#welding_data_generation_simulation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#client.welding_data_generation_simulation" title="Permalink to this definition"></a></dt>
+<dd><p>Generates the welding values with its assigned timestamps to be inserted in the DB.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="client.welding_workflow">
+<span class="sig-prename descclassname"><span class="pre">client.</span></span><span class="sig-name descname"><span class="pre">welding_workflow</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/client.html#welding_workflow"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#client.welding_workflow" title="Permalink to this definition"></a></dt>
+<dd><p>Thread in charge of the generate data generation loop</p>
+<p>Runs the welding data generation function several times before writing the all the generated data through store welding generation thread.
+Loop of program ends when MAX_CYCLE_LIMIT is reached.</p>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="Welcome to Framework for Intelligent Data Exchange Documentation!" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="master.html" class="btn btn-neutral float-right" title="master.py" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, António Pereira.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

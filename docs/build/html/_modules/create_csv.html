@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>create_csv &mdash; Framework for Intelligent Data Exchange in CPS 1.0 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> Framework for Intelligent Data Exchange in CPS
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Source Files:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../client.html">client.py</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../master.html">master.py</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../simulation.html">simulation.py</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Utility Files:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../cleaninfluxDB.html">clean_influxDB.py</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../utils.html">utils.py</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../create_csv.html">create_csv.py</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Framework for Intelligent Data Exchange in CPS</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="index.html">Module code</a> &raquo;</li>
+      <li>create_csv</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for create_csv</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Creates solution.csv file of all the logs retrieved.</span>
+
+<span class="sd">Saves the average and standard deviation of all the saved data inside</span>
+<span class="sd">/logs/ folder to solution.csv to be further analyzed.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="c1"># ------------------------------------------------------------------------------</span>
+
+<span class="c1"># Standard Library</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">csv</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="n">__author__</span> <span class="o">=</span> <span class="s2">&quot;António Pereira&quot;</span>
+<span class="n">__email__</span> <span class="o">=</span> <span class="s2">&quot;antonio_m_sp@hotmail.com&quot;</span>
+<span class="n">__status__</span> <span class="o">=</span> <span class="s2">&quot;Development&quot;</span>
+
+<span class="c1"># ------------------------------------------------------------------------------</span>
+
+
+<div class="viewcode-block" id="findLowestFolder"><a class="viewcode-back" href="../create_csv.html#create_csv.findLowestFolder">[docs]</a><span class="k">def</span> <span class="nf">findLowestFolder</span><span class="p">(</span><span class="n">list1</span><span class="p">,</span> <span class="n">list2</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Sorts the folders in ascending order to increase organizational structure of the project</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">tmp_string1</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">list1</span><span class="p">)</span>
+    <span class="n">numbers</span> <span class="o">=</span> <span class="n">tmp_string1</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)</span>
+
+    <span class="n">tmp_string2</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">list2</span><span class="p">)</span>
+    <span class="n">numbers2</span> <span class="o">=</span> <span class="n">tmp_string2</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="n">numbers</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">&gt;</span> <span class="nb">int</span><span class="p">(</span><span class="n">numbers2</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+        <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">elif</span> <span class="nb">int</span><span class="p">(</span><span class="n">numbers</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">==</span> <span class="nb">int</span><span class="p">(</span><span class="n">numbers2</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="ow">and</span> <span class="nb">int</span><span class="p">(</span><span class="n">numbers</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">&gt;</span> <span class="nb">int</span><span class="p">(</span><span class="n">numbers2</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+        <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">elif</span> <span class="nb">int</span><span class="p">(</span><span class="n">numbers</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">==</span> <span class="nb">int</span><span class="p">(</span><span class="n">numbers2</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="ow">and</span> <span class="nb">int</span><span class="p">(</span><span class="n">numbers</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">==</span> <span class="nb">int</span><span class="p">(</span><span class="n">numbers2</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="ow">and</span> <span class="nb">int</span><span class="p">(</span><span class="n">numbers</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span> <span class="o">&gt;</span> <span class="nb">int</span><span class="p">(</span><span class="n">numbers2</span><span class="p">[</span><span class="mi">3</span><span class="p">]):</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="k">return</span> <span class="kc">False</span></div>
+
+
+<div class="viewcode-block" id="sortFoldersFunction"><a class="viewcode-back" href="../create_csv.html#create_csv.sortFoldersFunction">[docs]</a><span class="k">def</span> <span class="nf">sortFoldersFunction</span><span class="p">(</span><span class="nb">list</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Bubble Sort implementation</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">findLowestFolder</span><span class="p">(</span><span class="nb">list</span><span class="p">[</span><span class="n">j</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">]):</span> <span class="c1">#left side &gt; right side -&gt; SWITCH THEM</span>
+                <span class="n">temp</span> <span class="o">=</span> <span class="nb">list</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+                <span class="nb">list</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">[</span><span class="n">j</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+                <span class="nb">list</span><span class="p">[</span><span class="n">j</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">temp</span>
+    <span class="k">return</span> <span class="nb">list</span></div>
+
+
+<div class="viewcode-block" id="average"><a class="viewcode-back" href="../create_csv.html#create_csv.average">[docs]</a><span class="k">def</span> <span class="nf">average</span><span class="p">(</span><span class="n">lst</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculates average of a list</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">avg</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">lst</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">lst</span><span class="p">)</span>
+    <span class="n">avg_float_decimal</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{0:.3f}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">avg</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">avg_float_decimal</span></div>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Parses files in /logs/ folder and creates a solution.csv with average and </span>
+<span class="sd">    standard deviation of the results retrieved from master.log and client1.log to clientN.log.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">cwd_logs</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()</span> <span class="o">+</span> <span class="s2">&quot;/logs/&quot;</span>
+    <span class="n">WELDING_VALUE_LIST</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">MASTER_SOLUTION_LIST</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">CLIENT_SOLUTION_LIST</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">TIME_ELAPSED_THREAD</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">TIME_TO_FINISH</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">TIME_SEND_DATA_MASTER_LIST</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">file_ending_client</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;1.log&quot;</span><span class="p">,</span> <span class="s2">&quot;2.log&quot;</span><span class="p">,</span> <span class="s2">&quot;3.log&quot;</span><span class="p">,</span> <span class="s2">&quot;4.log&quot;</span><span class="p">,</span> <span class="s2">&quot;5.log&quot;</span><span class="p">,</span> <span class="s2">&quot;6.log&quot;</span><span class="p">,</span> <span class="s2">&quot;7.log&quot;</span><span class="p">,</span> <span class="s2">&quot;8.log&quot;</span><span class="p">,</span> <span class="s2">&quot;9.log&quot;</span><span class="p">,</span> <span class="s2">&quot;0.log&quot;</span><span class="p">)</span>
+
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;solution.csv&#39;</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;UTF8&#39;</span><span class="p">,</span> <span class="n">newline</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f_csv</span><span class="p">:</span>
+        <span class="n">writer</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">writer</span><span class="p">(</span><span class="n">f_csv</span><span class="p">)</span>
+        <span class="n">header1</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;PARAMETERS&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;METRICS - MASTER&quot;</span><span class="p">]</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">30</span><span class="p">):</span>
+            <span class="n">header1</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;METRICS - CLIENT&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">))</span>
+            <span class="n">header1</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+            <span class="n">header1</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+            <span class="n">header1</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+
+        <span class="n">header2</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;Solution_Time&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;Number_Welding_Values&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">]</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">30</span><span class="p">):</span>
+            <span class="n">header2</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;TIME_ELAPSED_OF_THREAD_CLIENT&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">))</span>
+            <span class="n">header2</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+            <span class="n">header2</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;TIME_ELAPSED_SEND_DATA_MASTER&quot;</span><span class="p">)</span>
+            <span class="n">header2</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+
+        <span class="n">header3</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;CLIENTS&quot;</span><span class="p">,</span> <span class="s2">&quot;ITERATIONS_TILL_WRITE&quot;</span><span class="p">,</span> <span class="s2">&quot;GENERATED_POINTS_PER_CYCLE&quot;</span><span class="p">,</span> <span class="s2">&quot;TIME_TILL_REQUEST&quot;</span><span class="p">]</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">32</span><span class="p">):</span>  <span class="c1"># 30 + 2 from Master</span>
+            <span class="n">header3</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;Average&quot;</span><span class="p">)</span>
+            <span class="n">header3</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;Std_Deviation&quot;</span><span class="p">)</span>
+
+        <span class="n">writer</span><span class="o">.</span><span class="n">writerow</span><span class="p">(</span><span class="n">header1</span><span class="p">)</span>
+        <span class="n">writer</span><span class="o">.</span><span class="n">writerow</span><span class="p">(</span><span class="n">header2</span><span class="p">)</span>
+        <span class="n">writer</span><span class="o">.</span><span class="n">writerow</span><span class="p">(</span><span class="n">header3</span><span class="p">)</span>
+
+    <span class="n">MASTER_DONE</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="k">for</span> <span class="n">root</span><span class="p">,</span> <span class="n">dirs</span><span class="p">,</span> <span class="n">files</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">walk</span><span class="p">(</span><span class="n">cwd_logs</span><span class="p">):</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="nb">dir</span> <span class="ow">in</span> <span class="n">dirs</span><span class="p">:</span>
+            <span class="n">temp_dir</span> <span class="o">=</span> <span class="nb">dir</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Dir Value:&quot;</span><span class="p">,</span> <span class="nb">dir</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Directories Value:&quot;</span><span class="p">,</span> <span class="n">dirs</span><span class="p">)</span>
+
+            <span class="n">sortedDirs</span> <span class="o">=</span> <span class="n">sortFoldersFunction</span><span class="p">(</span><span class="n">dirs</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Directories Sorted:&quot;</span><span class="p">,</span> <span class="n">sortedDirs</span><span class="p">)</span>
+            <span class="nb">dir</span> <span class="o">=</span> <span class="n">sortedDirs</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;New Dir Value:&quot;</span><span class="p">,</span> <span class="nb">dir</span><span class="p">)</span>
+            <span class="n">index</span> <span class="o">+=</span> <span class="mi">1</span>
+
+
+            <span class="n">solutionPath2</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">cwd_logs</span><span class="p">,</span> <span class="nb">dir</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Solution of:&quot;</span> <span class="o">+</span> <span class="n">solutionPath2</span><span class="p">)</span>
+
+            <span class="c1"># MASTER</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">solutionPath2</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\\</span><span class="s1">master.log&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">MASTER_DONE</span><span class="p">:</span>
+                <span class="n">correct_filename</span> <span class="o">=</span> <span class="n">solutionPath2</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\\</span><span class="s2">master.log&quot;</span>
+
+                <span class="n">f_master</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">correct_filename</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">f_master</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="s2">&quot;Since Master did Request till all data arrived&quot;</span> <span class="ow">in</span> <span class="n">line</span><span class="p">:</span>
+                        <span class="c1"># TIME_TAKEN_BY_SIM</span>
+                        <span class="n">time_to_finish_value</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s1">&#39;{(.+?)}&#39;</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>
+                        <span class="n">TIME_TO_FINISH</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">time_to_finish_value</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="s2">&quot;Number of Welding Values in MasterDB&quot;</span> <span class="ow">in</span> <span class="n">line</span><span class="p">:</span>
+                        <span class="c1"># NUMBER OF WELDING_VALUES</span>
+                        <span class="n">welding_value</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s1">&#39;{(.+?)}&#39;</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>
+                        <span class="n">WELDING_VALUE_LIST</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">welding_value</span><span class="p">)</span>
+                <span class="n">f_master</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+                <span class="n">TIME_TO_FINISH_FLOAT</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">TIME_TO_FINISH</span><span class="p">:</span>
+                    <span class="n">f</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">item</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                    <span class="n">TIME_TO_FINISH_FLOAT</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+
+                <span class="n">WELDING_VALUE_LIST_INT</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">WELDING_VALUE_LIST</span><span class="p">:</span>
+                    <span class="n">f</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">item</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                    <span class="n">WELDING_VALUE_LIST_INT</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+
+                <span class="n">time_to_finish_value_avg</span> <span class="o">=</span> <span class="n">average</span><span class="p">(</span><span class="n">TIME_TO_FINISH_FLOAT</span><span class="p">)</span>
+                <span class="n">time_to_finish_value_std</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">TIME_TO_FINISH_FLOAT</span><span class="p">)</span>
+                <span class="n">time_to_finish_value_std_decimal</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{0:.3f}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">time_to_finish_value_std</span><span class="p">))</span>
+
+                <span class="n">welding_value_avg</span> <span class="o">=</span> <span class="n">average</span><span class="p">(</span><span class="n">WELDING_VALUE_LIST_INT</span><span class="p">)</span>
+                <span class="n">welding_value_std</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">WELDING_VALUE_LIST_INT</span><span class="p">)</span>
+                <span class="n">welding_value_std_decimal</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{0:.3f}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">welding_value_std</span><span class="p">))</span>
+
+                <span class="n">MASTER_SOLUTION_LIST</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">time_to_finish_value_avg</span><span class="p">)</span>
+                <span class="n">MASTER_SOLUTION_LIST</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">time_to_finish_value_std_decimal</span><span class="p">)</span>
+
+                <span class="n">MASTER_SOLUTION_LIST</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">welding_value_avg</span><span class="p">)</span>
+                <span class="n">MASTER_SOLUTION_LIST</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">welding_value_std_decimal</span><span class="p">)</span>
+                <span class="n">MASTER_DONE</span> <span class="o">=</span> <span class="kc">True</span>
+
+            <span class="c1"># ALL CLIENTS</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">15</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">solutionPath2</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\\</span><span class="s1">client&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;.log&quot;</span><span class="p">):</span>
+                    <span class="n">correct_filename</span> <span class="o">=</span> <span class="n">solutionPath2</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\\</span><span class="s1">client&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;.log&quot;</span>
+                    <span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">correct_filename</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">f</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="s2">&quot;Solution time adding all time_elapsed of thread&quot;</span> <span class="ow">in</span> <span class="n">line</span><span class="p">:</span>
+                            <span class="c1"># TIME_ELAPSED</span>
+                            <span class="n">time_elapsed_value</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s1">&#39;{(.+?)}&#39;</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>
+                            <span class="n">TIME_ELAPSED_THREAD</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">time_elapsed_value</span><span class="p">)</span>
+
+                            <span class="c1"># CLIENT_ID</span>
+                            <span class="n">regex</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\bclient\d+&quot;</span><span class="p">)</span>
+                            <span class="n">CLIENT_ID</span> <span class="o">=</span> <span class="n">regex</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+
+                        <span class="k">if</span> <span class="s2">&quot;sent Data to Master in&quot;</span> <span class="ow">in</span> <span class="n">line</span><span class="p">:</span>
+                            <span class="n">client_data_to_master</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s1">&#39;{(.+?)}&#39;</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span>
+                            <span class="n">TIME_SEND_DATA_MASTER_LIST</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">client_data_to_master</span><span class="p">)</span>
+
+                    <span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+                    <span class="n">TIME_ELAPSED_THREAD_FLOAT</span> <span class="o">=</span> <span class="p">[]</span>
+                    <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">TIME_ELAPSED_THREAD</span><span class="p">:</span>
+                        <span class="n">f</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">item</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                        <span class="n">TIME_ELAPSED_THREAD_FLOAT</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+
+                    <span class="n">time_elapsed_value_avg</span> <span class="o">=</span> <span class="n">average</span><span class="p">(</span><span class="n">TIME_ELAPSED_THREAD_FLOAT</span><span class="p">)</span>
+                    <span class="n">CLIENT_SOLUTION_LIST</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">time_elapsed_value_avg</span><span class="p">)</span>
+
+                    <span class="n">time_elapsed_value_std</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">TIME_ELAPSED_THREAD_FLOAT</span><span class="p">)</span>
+                    <span class="n">time_elapsed_value_std_decimal</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{0:.3f}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">time_elapsed_value_std</span><span class="p">))</span>
+                    <span class="n">CLIENT_SOLUTION_LIST</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">time_elapsed_value_std_decimal</span><span class="p">)</span>
+
+                    <span class="n">TIME_SEND_DATA_MASTER_FLOAT</span> <span class="o">=</span> <span class="p">[]</span>
+                    <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">TIME_SEND_DATA_MASTER_LIST</span><span class="p">:</span>
+                        <span class="n">f</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">item</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                        <span class="n">TIME_SEND_DATA_MASTER_FLOAT</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+
+                    <span class="n">client_send_data_master_avg</span> <span class="o">=</span> <span class="n">average</span><span class="p">(</span><span class="n">TIME_SEND_DATA_MASTER_FLOAT</span><span class="p">)</span>
+                    <span class="n">CLIENT_SOLUTION_LIST</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">client_send_data_master_avg</span><span class="p">)</span>
+
+                    <span class="n">client_send_data_master_std</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">TIME_SEND_DATA_MASTER_FLOAT</span><span class="p">)</span>
+                    <span class="n">client_send_data_master_std_decimal</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{0:.3f}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">client_send_data_master_std</span><span class="p">))</span>
+                    <span class="n">CLIENT_SOLUTION_LIST</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">client_send_data_master_std_decimal</span><span class="p">)</span>
+
+            <span class="c1"># INFORMATION TO SEND TO .CSV</span>
+            <span class="n">parameters_divided</span> <span class="o">=</span> <span class="nb">dir</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)</span>  <span class="c1"># PARAMETERS</span>
+            <span class="n">parameters_divided_fixed</span> <span class="o">=</span> <span class="s1">&#39;_&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parameters_divided</span><span class="p">)</span>
+
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;MASTER_SOL_LIST: &quot;</span><span class="p">,</span> <span class="n">MASTER_SOLUTION_LIST</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;CLIENT_SOL_LIST: &quot;</span><span class="p">,</span> <span class="n">CLIENT_SOLUTION_LIST</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;PARAMETERS_DIVIDED: &quot;</span><span class="p">,</span> <span class="n">parameters_divided</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;PARAMETERS_DIVIDED_FIXED: &quot;</span><span class="p">,</span> <span class="n">parameters_divided_fixed</span><span class="p">)</span>
+
+            <span class="n">SOLUTION_ROW_LIST</span> <span class="o">=</span> <span class="n">parameters_divided_fixed</span> <span class="o">+</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span>
+
+            <span class="c1">#convert tuple to list -&gt; add list -&gt; convert to tuple</span>
+
+            <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">MASTER_SOLUTION_LIST</span><span class="p">:</span>
+                <span class="n">SOLUTION_ROW_LIST</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">SOLUTION_ROW_LIST</span><span class="p">)</span>
+                <span class="n">SOLUTION_ROW_LIST</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">SOLUTION_ROW_LIST</span><span class="p">),</span> <span class="n">item</span><span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">CLIENT_SOLUTION_LIST</span><span class="p">:</span>
+                <span class="n">SOLUTION_ROW_LIST</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">SOLUTION_ROW_LIST</span><span class="p">)</span>
+                <span class="n">SOLUTION_ROW_LIST</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">SOLUTION_ROW_LIST</span><span class="p">),</span> <span class="n">item</span><span class="p">)</span>
+
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;SOLUTION ROW LIST:&quot;</span><span class="p">,</span> <span class="n">SOLUTION_ROW_LIST</span><span class="p">)</span>
+
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;solution.csv&#39;</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;UTF8&#39;</span><span class="p">,</span> <span class="n">newline</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f_csv</span><span class="p">:</span>
+                <span class="n">writer</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">writer</span><span class="p">(</span><span class="n">f_csv</span><span class="p">)</span>
+                <span class="n">writer</span><span class="o">.</span><span class="n">writerow</span><span class="p">(</span><span class="n">SOLUTION_ROW_LIST</span><span class="p">)</span>
+
+            <span class="c1"># RESET VARIABLES</span>
+            <span class="n">TIME_SEND_DATA_MASTER_LIST</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">SOLUTION_ROW_LIST</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">TIME_TO_FINISH</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">WELDING_VALUE_LIST</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">CLIENT_SOLUTION_LIST</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">MASTER_SOLUTION_LIST</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">TIME_ELAPSED_THREAD</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">TIME_ELAPSED_THREAD_FLOAT</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">TIME_SEND_DATA_MASTER_FLOAT</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">new_list_float_avg</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">CLIENT_ID</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">MASTER_DONE</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="nb">dir</span> <span class="o">=</span> <span class="n">temp_dir</span>
+
+    <span class="n">f_csv</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, António Pereira.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

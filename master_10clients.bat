@@ -1,1 +1,0 @@
-start py.exe "C:\Users\work\Documents\FEUP\MQTT_Project\MQTT_python\master.py" 10
