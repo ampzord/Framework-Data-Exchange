@@ -15,6 +15,10 @@ This Project was developed to complement the Dissertation: __Framework for Intel
 pip install -r requirements.txt
 ```
 
+## Documentation
+
+https://framework-for-intelligent-data-exchange.readthedocs.io/en/latest/
+
 ## Usage
 
 Run ```simulation.py``` with intended arguments of __NUMBER_CLIENTS__, __NUMBER_ITERATIONS_TILL_WRITE__, __NUMBER_GENERATED_POINTS_PER_CYCLE__, __TIME_TILL_REQUEST__ and __MAX_ITERATIONS_SIMULATION__.
