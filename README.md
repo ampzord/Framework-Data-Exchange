@@ -31,6 +31,16 @@ __MAX_ITERATIONS_SIMULATION__ - Number of iterations ran with the same arguments
 
 To view execution through debug mode select: __"DEBUG_MODE"__ instead of __"INFO_MODE"__
 
+## Branches
+
+__Master__ branch contains Concurrent Solution Approach.
+
+__SelfOrganizingSolution__ branch contains Self-Organizing Solution Approach.
+
+__LinearSolution__ branch contains Linear Solution Approach.
+
+__No-Request__ branch contains the execution of the program without any request of Master (This is the benchmark used to compare metrics).
+
 ## License
 
 This project is licensed under the terms of the **MIT** [license](https://github.com/ampzord/Framework-Data-Exchange/blob/master/LICENSE).
