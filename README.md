@@ -21,6 +21,17 @@ https://framework-for-intelligent-data-exchange.readthedocs.io/en/latest/
 
 ## Usage
 
+On Windows run ```influxd.exe``` in influxdb-1.8.10-1 folder to start influxDB.
+
+Install Mosquitto Broker and make sure it is running using:
+
+```sh
+netstat -an
+```
+
+![Mosquitto Broker](https://i.imgur.com/l54VwwB.png)
+
+
 Run ```simulation.py``` with intended arguments of __NUMBER_CLIENTS__, __NUMBER_ITERATIONS_TILL_WRITE__, __NUMBER_GENERATED_POINTS_PER_CYCLE__, __TIME_TILL_REQUEST__ and __MAX_ITERATIONS_SIMULATION__.
 
 __NUMBER_CLIENTS__ - Number of clients will dictate how many clients are created for the simulation.
