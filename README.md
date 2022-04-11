@@ -23,7 +23,7 @@ https://framework-for-intelligent-data-exchange.readthedocs.io/en/latest/
 
 On Windows run ```influxd.exe``` in influxdb-1.8.10-1 folder to start influxDB.
 
-Install Mosquitto Broker and make sure it is running using:
+Install Mosquitto Broker and make sure the port 1883 is listening:
 
 ```sh
 netstat -an
